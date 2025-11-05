@@ -1,0 +1,14 @@
+{
+  "name": "fluffy-favourites-slot",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p .",
+    "simulate": "node dist/sim/simulate.js",
+  "dev": "vite --host"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5",
+    "vite": "5.2.0"
+  }
+}
