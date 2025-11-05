@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Fluffy Favourites Slot (Standalone)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; display:flex; flex-direction:column; align-items:center; }
+  header { padding:1rem 0; }
+  .stage { position:relative; }
+  #slot { width:530px; height:300px; position:relative; margin:1rem 0; }
+  #reelBack { position:absolute; inset:0; background:#fff; border:2px solid #333; border-radius:12px; box-shadow:inset 0 0 10px rgba(0,0,0,.3); }
+  .cell { width:100px; height:100px; background:transparent; border:none; border-radius:0; display:flex; align-items:center; justify-content:center; position:absolute; top:0; left:0; pointer-events:none; z-index:5; }
+  /* --- Bonus Round Overlay Styles --- */
+  #bonusRoundOverlay { position:absolute; top:0; left:0; width:900px; height:600px; display:none; z-index:900; background:url('../public/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; }
+  #bonusRoundInner { position:absolute; inset:0; display:flex; flex-direction:column; padding:32px 42px 24px; box-sizing:border-box; }
+  #bonusHeader { font-size:2.2rem; margin:0 0 8px; font-weight:700; text-align:center; letter-spacing:.5px; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+  #bonusSub { font-size:.95rem; text-align:center; margin:0 0 18px; opacity:.85; }
+  #bonusPicksGrid { flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:26px 34px; align-content:center; justify-items:center; }
+  .pickCell { position:relative; width:230px; height:230px; cursor:pointer; border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.55), inset 0 0 18px rgba(255,255,255,.08); backdrop-filter:blur(1px); transition:transform .35s cubic-bezier(.25,.75,.25,1), box-shadow .35s; }
+  .pickCell:hover { transform:translateY(-6px) scale(1.03); box-shadow:0 10px 24px rgba(0,0,0,.6), inset 0 0 22px rgba(255,255,255,.12); }
+  .pickImg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.94) saturate(1.05); transition:opacity .6s ease, transform .6s ease; }
+  /* When picked, keep original image visible but dimmed behind record */
+  .pickCell.picked .pickImg { opacity:1; transform:scale(.92) rotate(2deg); filter:brightness(.55) saturate(.85) contrast(1); }
+  .recordImg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transform:scale(.3) rotate(-25deg); opacity:0; animation:recordReveal .65s cubic-bezier(.25,.8,.25,1) forwards; filter:drop-shadow(0 4px 12px rgba(0,0,0,.6)); z-index:2; clip-path:circle(48% at 50% 50%); background:transparent; }
+  .pickImg { z-index:1; }
+  @keyframes recordReveal { 0% { transform:scale(.3) rotate(-25deg); opacity:0; } 55% { opacity:1; } 100% { transform:scale(1) rotate(0deg); opacity:1; } }
+  .multiplierText { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(.6); font-size:3.2rem; font-weight:900; font-family:Impact, system-ui, sans-serif; color:#000; -webkit-text-stroke:3px #fff; text-shadow:0 0 8px rgba(255,255,255,.85), 0 0 32px rgba(255,255,255,.5); letter-spacing:1px; opacity:0; animation:multiplierPop .55s ease forwards .25s; z-index:3; pointer-events:none; }
+  @keyframes multiplierPop { 0% { transform:translate(-50%,-50%) scale(.4); opacity:0; } 50% { transform:translate(-50%,-50%) scale(1.15); opacity:1; } 100% { transform:translate(-50%,-50%) scale(1); opacity:1; } }
+  #bonusControls { display:flex; justify-content:center; gap:18px; margin-top:16px; }
+  #bonusControls button { background:#ff4fa3; padding:.75rem 1.4rem; border:none; border-radius:10px; font-weight:600; font-size:1rem; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+  #bonusControls button.secondary { background:#333; }
+  #bonusRoundOverlay.fadeOut { animation:bonusOverlayOut .7s ease forwards; }
+  @keyframes bonusOverlayOut { 0% { opacity:1; } 100% { opacity:0; } }
+  .pickCell.disabled { pointer-events:none; filter:grayscale(.65) brightness(.8); }
+  .pickCell.finalReveal:not(.picked) .pickImg { opacity:.35; filter:brightness(.6) saturate(.8); }
+  .pickCell.finalReveal:not(.picked) .recordImg { animation:recordReveal .9s ease forwards .15s; }
+  .pickCell.finalReveal:not(.picked) .multiplierText { animation:multiplierPop .6s ease forwards .3s; }
+  /* Distinct anticipation glow */
+  /* Refined glow: remove square border; use circular halo centered over symbol area */
+  .cell.anticipate-fs, .cell.anticipate-bonus { border:none; box-shadow:none; animation:none; }
+  .cell.anticipate-fs::before, .cell.anticipate-bonus::before { content:""; position:absolute; left:14px; top:14px; width:72px; height:72px; border-radius:50%; pointer-events:none; filter:blur(2px); }
+  .cell.anticipate-fs::before { box-shadow:
+    0 0 24px 10px rgba(0,255,140,0.8),
+    0 0 48px 22px rgba(0,255,160,0.55),
+    inset 0 0 16px rgba(0,255,150,0.7); animation:neonPulse 1.3s ease-in-out infinite; }
+  .cell.anticipate-bonus::before { box-shadow:
+    0 0 24px 10px rgba(255,150,40,0.85),
+    0 0 48px 22px rgba(255,130,20,0.55),
+    inset 0 0 16px rgba(255,170,60,0.75); animation:neonPulse 1.3s ease-in-out infinite; }
+  .cell.anticipate-fs::after, .cell.anticipate-bonus::after { display:none; }
+  /* Removed reel-wide glow (.reel-tease-*) in favour of symbol-only halo */
+  @keyframes neonPulse { 0%,100% { filter:brightness(1) saturate(1); } 50% { filter:brightness(1.55) saturate(1.15); } }
+  @keyframes flicker { 0%,100% { filter:brightness(1);} 50% { filter:brightness(1.6);} }
+  .cell.spinning { animation:flicker .5s linear infinite; }
+  /* Add pulse variants for fs/bonus anticipation; define pulseGlow keyframes */
+  @keyframes pulseGlow { 0%,100% { box-shadow:inherit; transform:scale(1); } 50% { box-shadow:
+      0 0 26px 10px rgba(0,255,150,0.95),
+      0 0 60px 26px rgba(0,255,180,0.55),
+      inset 0 0 18px rgba(0,255,160,0.85); transform:scale(1.05); } }
+  .cell.anticipate.pulse,
+  .cell.anticipate-fs.pulse,
+  .cell.anticipate-bonus.pulse { animation:pulseGlow 1.25s ease-in-out infinite, pulseScale 1.6s ease-in-out infinite; }
+  /* Increased scale from 1.06 -> 1.12 for stronger anticipation */
+  @keyframes pulseScale { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+    /* Simplified landing effect: remove vertical translation to prevent perceived row jumps */
+    @keyframes bounceLanding { 
+        0% { transform:scale(0.96,1.02); }
+        35% { transform:scale(1.01,0.995); }
+        65% { transform:scale(0.995,1.005); }
+        100% { transform:scale(1,1); }
+      }
+  .cell.bounce { animation:none; }
+  @keyframes symbolFadeIn { 0% { opacity:0; transform:scale(0.96); } 60% { opacity:1; transform:scale(1.02); } 100% { opacity:1; transform:scale(1); } }
+  .cell.fade-in img { animation:symbolFadeIn .42s ease-out; }
+  .cell.blurFast img, .stripInner.blurFast img { filter:blur(4px) brightness(.9) saturate(.95) contrast(1.02); }
+  .stripInner.midDecel img { filter:blur(2px) brightness(.95) saturate(.98) contrast(1.01); transition:filter .25s linear; }
+  .cell.reducingBlur img { transition:filter .35s ease; filter:blur(2px) brightness(.92) saturate(.95); }
+  .cell.finalSharp img { filter:none; }
+  .symbol-img { width:100%; height:100%; object-fit:contain; }
+  #lineOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:20; }
+  #controls { display:flex; gap:1rem; align-items:center; }
+  button { background:#ff4fa3; color:#fff; border:none; padding:.75rem 1.25rem; border-radius:6px; font-size:1rem; cursor:pointer; font-weight:600; }
+  button:disabled { opacity:.4; cursor:default; }
+  #log { max-width:640px; font-size:.75rem; line-height:1.4; background:#181818; padding:1rem; border-radius:8px; height:160px; overflow:auto; }
+  .stat-bar { display:flex; gap:2rem; flex-wrap:wrap; font-size:.85rem; }
+  .fs-banner { background:#673ab7; padding:.4rem .8rem; border-radius:4px; margin-left:1rem; display:none; }
+  .fs-banner.active { display:inline-block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fluffy Favourites Slot <span id="fsState" class="fs-banner">Free Spins: <span id="fsRemain"></span></span></h1>
+</header>
+<div id="gameBoard" style="position:relative; width:900px; height:600px; background:url('../symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center;">
+  <div id="slot" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"><div id="reelBack"></div></div>
+  <svg id="lineOverlay" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"></svg>
+  <!-- Bonus Round Full Overlay (covers entire game board) -->
+  <div id="bonusRoundOverlay">
+    <div id="bonusRoundInner">
+      <h2 id="bonusHeader">Bonus Round</h2>
+      <p id="bonusSub">Pick the vinyls to reveal multipliers!</p>
+      <div id="bonusPicksGrid"></div>
+      <div id="bonusControls">
+        <button id="bonusRevealBtn" class="secondary" title="Reveal remaining multipliers">Reveal Remaining</button>
+        <button id="bonusExitBtn" title="Close bonus round early (for testing)">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="controls">
+  <label>Bet/Line <input id="bet" type="number" value="0.04" step="0.01" style="width:70px" disabled title="Fixed £1 total stake (25 lines × £0.04)"></label>
+  <button id="spinBtn">Spin</button>
+  <button id="autoBtn">Auto (50)</button>
+  <button id="forceFSBtn">Force FS</button>
+  <button id="forceBonusBtn">Force Bonus</button>
+  <button id="simBtn" style="background:#2196f3;">Sim 10k</button>
+  <div>Total Win: <strong id="lastWin">0</strong></div>
+  <audio id="teaseSound" preload="auto">
+    <source src="../public/sounds/tease.mp3" type="audio/mpeg" />
+  </audio>
+</div>
+<div id="timingControls" style="display:flex; flex-wrap:wrap; gap:1rem; padding:.5rem 1rem; background:#1c1c1c; border-radius:8px; margin:.5rem 0;">
+  <label style="display:flex; flex-direction:column; font-size:.7rem;">Base Reel<br><input id="baseReelMs" type="range" min="150" max="600" value="280" step="10"><span id="baseReelMsVal">280ms</span></label>
+  <label style="display:flex; flex-direction:column; font-size:.7rem;">Stagger<br><input id="staggerMs" type="range" min="60" max="400" value="120" step="10"><span id="staggerMsVal">120ms</span></label>
+  <label style="display:flex; flex-direction:column; font-size:.7rem;">Tease Pause<br><input id="teaseFirstMs" type="range" min="400" max="1800" value="900" step="50"><span id="teaseFirstMsVal">900ms</span></label>
+  <label style="display:flex; flex-direction:column; font-size:.7rem;">Tease Per Reel<br><input id="teasePerMs" type="range" min="200" max="1000" value="450" step="25"><span id="teasePerMsVal">450ms</span></label>
+  <button id="timingReset" style="align-self:flex-end; background:#444; padding:.45rem .8rem;">Reset</button>
+</div>
+  <!-- Bonus Pick Modal -->
+  <div id="pickModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); align-items:center; justify-content:center; z-index:1000;">
+    <div style="background:#222; padding:1rem 1.5rem; border-radius:12px; width:420px; max-width:90%; box-shadow:0 0 18px rgba(0,0,0,.6);">
+      <h2 style="margin-top:0;">Bonus Pick <small id="pickInfo" style="font-size:.7em; opacity:.7;"></small></h2>
+      <div id="pickGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin:.75rem 0;"></div>
+      <div id="pickSummary" style="min-height:1.2em; font-size:.9rem; margin:.5rem 0 .75rem;"></div>
+      <div style="display:flex; justify-content:space-between;">
+        <button id="pickCloseBtn" style="background:#444;">Close</button>
+        <button id="pickRevealRestBtn" style="background:#ff4fa3;">Reveal Remaining</button>
+      </div>
+    </div>
+  </div>
+<div class="stat-bar">
+  <div>Balance: <span id="balance">10000</span></div>
+  <div>RTP (session): <span id="rtp">--</span></div>
+  <div>Spins: <span id="spins">0</span></div>
+  <div>Session Net: <span id="sessionNet">0.00</span></div>
+</div>
+<h3>Log</h3>
+<div id="log"></div>
+<!-- Winners Panel -->
+<div id="bonusWinPanel" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); align-items:center; justify-content:center; z-index:1100;">
+  <div style="background:#1c1c1c; padding:1.2rem 1.6rem; border-radius:16px; width:440px; max-width:92%; text-align:center; box-shadow:0 0 22px rgba(0,0,0,.7);">
+    <h2 style="margin:0 0 .5rem;">Bonus Complete!</h2>
+    <p id="bonusWinDetails" style="font-size:1rem; line-height:1.4; margin:.25rem 0 .75rem;"></p>
+    <p style="font-size:.75rem; opacity:.6;">Panel will close automatically…</p>
+    <button id="bonusWinCloseBtn" style="margin-top:.6rem; background:#ff4fa3; padding:.6rem 1.2rem; border-radius:8px; font-weight:600;">Close Now</button>
+  </div>
+</div>
+<script>
+// --- Config & Data ---
+const paytable = {
+  // Total stake multipliers (scaled by 0.04 from original per-line pays)
+  S1:{3:1.84,4:9.28,5:46.4}, S2:{3:1.4,4:6.96,5:23.2}, S3:{3:0.92,4:4.64,5:13.92}, S4:{3:0.68,4:3.72,5:11.6},
+  S5:{3:0.56,4:2.8,5:9.28}, S6:{3:0.48,4:2.32,5:6.96}, S7:{3:0.36,4:1.84,5:5.56},
+  S8:{3:0.28,4:1.4,5:4.64}, S9:{3:0.24,4:1.16,5:3.72}, S10:{3:0.2,4:0.92,5:2.8},
+  S11:{}, S12:{}, S13:{}
+};
+const scatterPayout = {3:2.0,4:10.0,5:50};
+// Align free spin awards with engine config (reduced set) Option B keeps 5/10/15
+const freeSpinAwards = {3:5,4:10,5:15};
+const lines = [
+  [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[1,0,1,0,1],[1,2,1,2,1],[0,1,0,1,0],[2,1,2,1,2],[1,0,0,0,1],
+  [1,2,2,2,1],[2,2,1,2,2],[0,0,1,0,0],[2,1,1,1,2],[0,1,1,1,0],[0,2,0,2,0],[2,0,2,0,2],[1,1,0,1,1],[1,1,2,1,1],[2,2,0,2,2],
+  [0,0,2,0,0],[0,0,1,2,2],[2,2,1,0,0],[1,0,2,0,1],[1,2,0,2,1]
+];
+// Reel strips replaced with authoritative data from src/config/reels.ts (lengths: 55,64,65,56,66)
+const reels = [
+  // Option B adjusted reels (added spaced S12 scatters and extra S11 wilds)
+  ['S10','S7','S4','S5','S6','S1','S7','S2','S8','S3','S12','S4','S10','S1','S5','S6','S1','S8','S2','S7','S3','S13','S4','S11','S7','S4','S5','S6','S1','S8','S2','S7','S3','S10','S4','S7','S6','S1','S8','S12','S7','S3','S10','S4','S9','S7','S4','S13','S7','S4','S10','S7','S4','S5','S13'],
+  ['S13','S9','S12','S6','S1','S7','S2','S8','S3','S9','S4','S10','S3','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S8','S1','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S8','S3','S11','S6','S2','S8','S11','S9','S3','S12','S6','S3','S8','S6','S1','S8','S2','S10','S3','S8','S13','S10','S8','S1','S8','S3','S5','S10'],
+  ['S13','S5','S6','S1','S7','S2','S8','S3','S9','S4','S11','S8','S1','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S1','S8','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S8','S11','S5','S2','S8','S5','S12','S1','S7','S2','S8','S3','S9','S4','S10','S5','S9','S1','S7','S13','S8','S3','S12','S1','S8','S9','S2'],
+  ['S13','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S12','S6','S1','S7','S2','S8','S3','S9','S4','S5','S10','S11','S7','S2','S8','S4','S6','S1','S7','S2','S8','S3','S9','S4','S10','S5','S8','S12','S10','S4','S13','S1','S5','S4'],
+  ['S5','S9','S10','S5','S6','S1','S7','S2','S8','S3','S9','S4','S10','S9','S13','S5','S10','S6','S1','S7','S2','S8','S3','S9','S4','S10','S5','S9','S1','S5','S10','S12','S1','S7','S2','S8','S3','S9','S4','S10','S8','S11','S10','S9','S6','S4','S9','S2','S8','S3','S9','S4','S10','S8','S5','S2','S10','S5','S6','S2','S9','S4','S8','S13','S10']
+];
+// Updated mapping using user-provided JPEG assets
+const symbolImage = {
+  // High
+  S1:'../symbols/symbol 1.jpg',
+  S2:'../symbols/symbol 2.jpg',
+  S3:'../symbols/symbol 3.jpg',
+  S4:'../symbols/symbol 4.jpg',
+  // Medium
+  S5:'../symbols/symbol 5.jpg',
+  S6:'../symbols/symbol 6.jpg',
+  S7:'../symbols/symbol 7.jpg',
+  // Low
+  S8:'../symbols/symbol 8.jpg',
+  S9:'../symbols/symbol 9.jpg',
+  S10:'../symbols/symbol 10.jpg',
+  // Feature
+  S11:'../symbols/wild symbol.jpg',
+  S12:'../symbols/free spins symbol.jpg',
+  S13:'../symbols/Bonus symbol.jpg'
+};
+// External simple name -> internal code mapping
+const externalSymbolMap = {
+  symbol1:'S1', symbol2:'S2', symbol3:'S3', symbol4:'S4', symbol5:'S5', symbol6:'S6', symbol7:'S7', symbol8:'S8', symbol9:'S9', symbol10:'S10',
+  wildsymbol:'S11', freespinssymbol:'S12', bonussymbol:'S13'
+};
+// Preload images
+Object.values(symbolImage).forEach(src => { const im = new Image(); im.src = src; });
+const WILD = 'S11'; const SCATTER = 'S12'; const SCATTER2 = 'S13';
+
+// --- State ---
+let balance = 10000, totalBet = 0, totalWin = 0, spins = 0, autoRemaining = 0, pendingFreeSpins = 0, spinning = false, forcedBonusPicks = 0, forceBonusSpin = false;
+let winLinesTimeout = null;
+function clearWinLines(){
+  const overlay = document.getElementById('lineOverlay');
+  if (overlay) overlay.innerHTML='';
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win'));
+}
+// Bonus pick state
+let activePickGame = null; // { picksAllowed, baseBet, board:[{index,multiplier,picked}], picksMade, revealedMultipliers, totalMultiplier, win, complete }
+// Fast base timings + tease configuration
+let SPIN_TIME_PER_REEL = 280, REEL_STAGGER = 120;
+let TEASE_EXTRA_DELAY_FIRST = 900; // dramatic pause once tease triggers
+let TEASE_EXTRA_DELAY_PER_REEL = 450; // added per remaining reel after tease
+
+// --- Helpers ---
+function rand(max){ return Math.floor(Math.random()*max); }
+function performSpin(betPerLine){
+  // Capture random start positions per reel so visual spin can replicate the same logical origin.
+  const grid = [];
+  const startPositions = [];
+  for (let r=0;r<reels.length;r++){
+    const strip = reels[r];
+    const start = rand(strip.length);
+    startPositions.push(start);
+    grid.push([0,1,2].map(o => strip[(start+o)%strip.length]));
+  }
+  const lineWins = []; let totalLineWin = 0;
+  for (let li=0; li<lines.length; li++){
+    const pattern = lines[li];
+    let best = grid[0][pattern[0]];
+    if (best===WILD){
+  for (let c=1;c<grid.length;c++){ const s=grid[c][pattern[c]]; if (s!==WILD && s!==SCATTER && s!==SCATTER2){ best=s; break; } }
+    }
+  if (best===SCATTER || best===SCATTER2) continue; // skip scatters for line wins
+    let count=0;
+    for (let c=0;c<grid.length;c++){
+      const sym=grid[c][pattern[c]]; if (sym===best || sym===WILD) count++; else break;
+    }
+    if (count>=3){ const pay=paytable[best]?.[count]; if (pay){ const win=pay*betPerLine; lineWins.push({lineIndex:li,symbol:best,count,payout:win}); totalLineWin+=win; } }
+  }
+  let scatterCount=0; for (let c=0;c<grid.length;c++){ for (let r=0;r<3;r++){ if (grid[c][r]===SCATTER) scatterCount++; }}
+  const scatterWin = scatterPayout[scatterCount]? scatterPayout[scatterCount]*betPerLine*lines.length : 0;
+  const triggeredFreeSpins = freeSpinAwards[scatterCount]||0;
+  // Count B2 scatter (second bonus) if present
+  let scatter2Count = 0;
+  for (let c=0;c<grid.length;c++) for (let r=0;r<3;r++) if (grid[c][r]===SCATTER2) scatter2Count++;
+  // If forcing bonus spin ensure at least 3 B2
+  if (forceBonusSpin && scatter2Count < 3) {
+    const needed = 3 - scatter2Count;
+    let injected = 0;
+    // Replace whole visible triple for selected reels using a contiguous sequence starting at a real S13 position on that reel for guaranteed visual alignment.
+    for (let reelIndex=0; reelIndex<reels.length && injected < needed; reelIndex++) {
+      // Skip reels already displaying at least one S13 (keep their natural window)
+      let hasBonus = false; for (let rr=0; rr<3; rr++) { if (grid[reelIndex][rr]===SCATTER2) { hasBonus=true; break; } }
+      if (hasBonus) continue;
+      const strip = reels[reelIndex];
+      // Find a starting index where the next three symbols contain at least one S13
+      let startAt = -1;
+      for (let i=0; i<strip.length; i++) {
+        if (strip[i]===SCATTER2 || strip[(i+1)%strip.length]===SCATTER2 || strip[(i+2)%strip.length]===SCATTER2) { startAt = i; break; }
+      }
+      if (startAt === -1) continue; // fallback: no bonus symbol found (unlikely given strip data)
+      startPositions[reelIndex] = startAt; // ensure spin alignment will land exactly on this triple
+      grid[reelIndex] = [strip[startAt], strip[(startAt+1)%strip.length], strip[(startAt+2)%strip.length]];
+      // Count how many bonus symbols we injected in this reel's visible triple
+      let addedHere = 0; for (let k=0;k<3;k++) if (grid[reelIndex][k]===SCATTER2) addedHere++;
+      injected += Math.max(1, addedHere); // progress injection goal
+    }
+    // Recount after injection
+    scatter2Count = 0; for (let c=0;c<grid.length;c++) for (let r=0;r<3;r++) if (grid[c][r]===SCATTER2) scatter2Count++;
+    log(`ForceBonus Injection: target>=3 resultingCount=${scatter2Count}`);
+  }
+  forceBonusSpin = false; // reset after use
+  // Map scatter2Count to picks (3->3,4->4,5->5)
+  let bonusPickCount = 0;
+  if (scatter2Count >=3) bonusPickCount = Math.min(scatter2Count,5);
+  bonusPickCount = bonusPickCount === 3 ? 3 : bonusPickCount === 4 ? 4 : bonusPickCount === 5 ? 5 : (bonusPickCount < 3 ? 0 : bonusPickCount);
+  bonusPickCount = [3,4,5].includes(bonusPickCount) ? bonusPickCount : 0;
+  return { grid, startPositions, lineWins, scatterCount, scatter2Count, scatterWin, totalWin: totalLineWin+scatterWin, triggeredFreeSpins, bonusPickCount };
+}
+
+function initGrid(){
+  // Clear slot but preserve backdrop
+  const slot=document.getElementById('slot');
+  if(!slot) return;
+  [...slot.querySelectorAll("[id^='reelTrack_']")].forEach(e=>e.remove());
+  ensureReelTracks();
+  ensureCells();
+}
+function ensureCells(){
+  const slot=document.getElementById('slot');
+  if(!slot) return;
+  // If cells already exist, do not recreate
+  if(slot.querySelector('.cell')) return;
+  for(let c=0;c<5;c++){
+    for(let r=0;r<3;r++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.dataset.pos=`${c}-${r}`;
+      cell.style.left=(c*(100+6))+"px";
+  cell.style.top=(r*100)+"px"; // removed vertical gap
+      slot.appendChild(cell);
+    }
+  }
+}
+function ensureReelTracks(){
+  for(let c=0;c<5;c++){
+    let existing = document.getElementById('reelTrack_'+c);
+    if(existing) existing.remove();
+    const track = document.createElement('div');
+    track.id='reelTrack_'+c;
+    track.style.position='absolute';
+    track.style.left=(c*(100+6))+'px';
+    track.style.top='0';
+    track.style.width='100px';
+  track.style.height='300px';
+    track.style.overflow='hidden';
+    track.style.pointerEvents='none';
+    const inner=document.createElement('div');
+    inner.className='stripInner';
+    inner.style.position='absolute';
+    inner.style.top='0';
+    inner.style.left='0';
+    inner.style.width='100%';
+    inner.style.willChange='transform';
+    const stripSymbols=reels[c];
+    const loop=stripSymbols.concat(stripSymbols.slice(0,6));
+    loop.forEach(sym=>{
+      const holder=document.createElement('div');
+      holder.style.width='100px'; holder.style.height='100px';
+      holder.style.display='flex'; holder.style.alignItems='center'; holder.style.justifyContent='center';
+      const img=document.createElement('img'); img.className='symbol-img'; img.src=symbolImage[sym]; img.alt=sym; holder.appendChild(img);
+      inner.appendChild(holder);
+    });
+    track.appendChild(inner);
+    document.getElementById('slot').appendChild(track);
+  }
+}
+// Physical spin simulation: top-to-bottom visual spin (content moves DOWN), fast start then quick decel + subtle bounce
+function startSpin(){
+  // Clear overlay classes; no images stored in cells anymore
+  document.querySelectorAll('.cell').forEach(c=>{
+    c.classList.remove('finalSharp','reducingBlur','anticipate-fs','anticipate-bonus','pulse','fade-in');
+    c.innerHTML=''; // ensure clean state
+  });
+  ensureReelTracks();
+  document.querySelectorAll('.stripInner').forEach(track=>track.classList.add('blurFast'));
+}
+const reelControllers = new Map();
+function beginReelCycle(reelIndex, startIndex){
+  const strip = reels[reelIndex];
+  const track = document.getElementById('reelTrack_'+reelIndex)?.querySelector('.stripInner');
+  if(!track) return { decelerate(){}};
+  // Start at the same random index chosen when generating the logical result so alignment is faithful.
+  let index = startIndex;
+  let speed = 2400; // px per second initial velocity (faster burst)
+  let spinningActive = true;
+  let pos = -index*100; // translateY (negative means top-of-strip at view)
+  const loopLen = strip.length + 6; // we duplicated 6
+  const animate = (lastTs)=>{
+    if(!spinningActive) return;
+    requestAnimationFrame((ts)=>{
+      const dt = (ts - lastTs)/1000; // seconds
+      pos += speed*dt; 
+      const totalHeight = loopLen*100;
+      if(pos > 0){ pos -= totalHeight; }
+      track.style.transform=`translateY(${pos}px)`;
+      // Add mid-deceleration blur reduction hook (simple heuristic on speed)
+  if(speed < 1600 && speed > 600) { track.classList.add('midDecel'); }
+      animate(ts);
+    });
+  };
+  requestAnimationFrame((ts)=>animate(ts));
+  return {
+    decelerate(finalSymbols, extraSlow){
+      // Forward search from startIndex so we land on the first reachable occurrence instead of the first in strip (prevents mismatched drop position for duplicates).
+      let landingIndex = index;
+      for (let step=0; step<strip.length; step++) {
+        const cand = (index + step) % strip.length;
+        if (
+          strip[cand] === finalSymbols[0] &&
+          strip[(cand+1)%strip.length] === finalSymbols[1] &&
+          strip[(cand+2)%strip.length] === finalSymbols[2]
+        ) { landingIndex = cand; break; }
+      }
+      const targetPos = -landingIndex*100; // final alignment
+  // Deceleration profile: shorter duration for snappier slow-down, extend slightly if tease
+  const duration = extraSlow? 1400 : 780; // ms
+      const startPos = pos;
+      const startSpeed = speed;
+      const startTime = performance.now();
+  // Custom ease for quick early slow then gentle settle
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+      return new Promise(resolve=>{
+      const step=()=>{
+        const now=performance.now();
+        const elapsed=now-startTime;
+        const progress=Math.min(elapsed/duration,1);
+        const eased = easeOutCubic(progress);
+        // Interpolate towards target with a subtle leading overshoot (apply only near end)
+        // Smooth interpolation (removed upward overshoot for clearer stop before bounce)
+        pos = startPos*(1-eased) + targetPos*eased;
+        // Dynamic blur reduction based on progress when in deceleration phase
+        if(track.classList.contains('blurFast')){
+          const blurPx = 4 - 2.5*eased; // 4px -> ~1.5px
+          track.querySelectorAll('img').forEach(im=>{ im.style.filter = `blur(${Math.max(blurPx,1.5).toFixed(1)}px) brightness(${0.9 + 0.04*eased}) saturate(${0.95 + 0.03*eased}) contrast(${1.02 - 0.01*eased})`; });
+        }
+        track.style.transform=`translateY(${pos}px)`;
+        speed = startSpeed*(1-progress);
+        if(progress<1){ requestAnimationFrame(step); } else {
+          spinningActive=false;
+          // Final precise alignment
+          track.style.transform=`translateY(${targetPos}px)`;
+          track.classList.remove('midDecel'); track.classList.remove('blurFast');
+          // Remove any inline filters from track images
+          track.querySelectorAll('img').forEach(im=>{ im.style.filter=''; });
+          // Determine actual visible top triple from final transform rather than trusting finalSymbols array for glow alignment.
+          const landingIndexFromTransform = Math.round(-targetPos/100) % strip.length;
+          for(let row=0; row<3; row++){
+            const actualSym = strip[(landingIndexFromTransform + row) % strip.length];
+            const cell=document.querySelector(`.cell[data-pos='${reelIndex}-${row}']`);
+            if(cell){
+              cell.classList.remove('anticipate','blurFast','reducingBlur','finalSharp','fade-in','anticipate-fs','anticipate-bonus','pulse');
+              cell.innerHTML='';
+              cell.dataset.sym = actualSym;
+            }
+          }
+          // Softer JS bounce (reduced amplitude & duration) – subtle tactile feedback without harsh drop.
+          // Removed bounce/scale pulse entirely to eliminate any perceived vertical offset.
+          // Alignment diagnostic log (can be removed after validation)
+          try {
+            const visA = strip[landingIndex];
+            const visB = strip[(landingIndex+1)%strip.length];
+            const visC = strip[(landingIndex+2)%strip.length];
+            log(`Reel ${reelIndex+1} align start=${index} land=${landingIndex} dist=${(landingIndex-index+strip.length)%strip.length} vis=[${visA},${visB},${visC}] expected=[${finalSymbols.join(',')}]`);
+          } catch(e){}
+          // Do not hide track; keep consistent layout to prevent perceived row jumps
+          resolve();
+        }
+      }
+      step();
+      });
+    }
+  };
+}
+function drawLines(lineWins){
+  const overlay=document.getElementById('lineOverlay'); if(!overlay) return; overlay.innerHTML='';
+  const colors=['#ffeb3b','#39ff14','#ff4fa3','#2196f3','#ff9800','#e91e63','#00bcd4','#ffc107'];
+  lineWins.forEach((w,i)=>{
+    const pattern=lines[w.lineIndex];
+    const pts=[];
+    for(let reel=0; reel<w.count; reel++){
+      const row=pattern[reel];
+      const x = reel*100 + reel*6 + 50; // keep horizontal spacing
+      const y = row*100 + 50; // removed vertical 6px gaps
+      pts.push(`${x},${y}`);
+    }
+    const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    pl.setAttribute('points', pts.join(' '));
+    pl.setAttribute('fill','none');
+    pl.setAttribute('stroke', colors[i % colors.length]);
+    pl.setAttribute('stroke-width','6');
+    pl.setAttribute('stroke-linecap','round');
+    pl.setAttribute('stroke-linejoin','round');
+    overlay.appendChild(pl);
+  });
+  if (winLinesTimeout) { clearTimeout(winLinesTimeout); }
+  winLinesTimeout = setTimeout(()=> clearWinLines(),5000);
+}
+
+function log(msg){ const el=document.getElementById('log'); const line=document.createElement('div'); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; el.prepend(line); }
+function updateStats(){ document.getElementById('balance').textContent=balance.toFixed(2); document.getElementById('spins').textContent=spins.toString(); document.getElementById('rtp').textContent=(totalWin/(totalBet||1)*100).toFixed(2)+'%'; const net = totalWin - totalBet; const netEl=document.getElementById('sessionNet'); if(netEl){ netEl.textContent = (net>=0?'+':'')+net.toFixed(2); netEl.style.color = net>=0 ? '#39ff14' : '#ff4fa3'; } }
+function setButtons(disabled){ document.getElementById('spinBtn').disabled=disabled; document.getElementById('autoBtn').disabled=disabled; }
+
+function createBonusPickBoard(picksAllowed, baseBet){
+  const allMultipliers = [1,2,5,10,20,25,50,100];
+  const board = [];
+  // Shuffle pick images each round for random fixed arrangement
+  const pickImages = [
+  '../symbols/Bonus pick 1.jpg',
+  '../symbols/Bonus pick 2.jpg',
+  '../symbols/Bonus pick 3.jpg',
+  '../symbols/Bonus pick 4.jpg',
+  '../symbols/Bonus pick 5.jpg',
+  '../symbols/Bonus pick 6.jpg'
+  ].sort(()=>Math.random()-0.5);
+  for (let i=0;i<6;i++) board.push({ index:i, image: pickImages[i], multiplier: allMultipliers[rand(allMultipliers.length)], picked:false });
+  return { picksAllowed, baseBet, board, picksMade:0, revealedMultipliers:[], totalMultiplier:0, win:0, complete:false };
+}
+function pickBonusSquare(state, cellIndex){
+  if (state.complete || state.picksMade >= state.picksAllowed) return state;
+  const cell = state.board.find(c=>c.index===cellIndex); if (!cell || cell.picked) return state;
+  cell.picked = true;
+  const revealed = state.revealedMultipliers.concat(cell.multiplier);
+  const picksMade = state.picksMade + 1;
+  const totalMultiplier = revealed.reduce((a,b)=>a+b,0);
+  const win = totalMultiplier * state.baseBet;
+  const complete = picksMade >= state.picksAllowed;
+  return { ...state, picksMade, revealedMultipliers: revealed, totalMultiplier, win, complete };
+}
+function startPickGame(picksAllowed, baseBet){
+  activePickGame = createBonusPickBoard(picksAllowed, baseBet);
+  const overlay = document.getElementById('bonusRoundOverlay');
+  const grid = document.getElementById('bonusPicksGrid');
+  const header = document.getElementById('bonusHeader');
+  const sub = document.getElementById('bonusSub');
+  if(!overlay || !grid) return;
+  header.textContent = `Bonus Round - Pick ${picksAllowed}`;
+  sub.textContent = picksAllowed === 3 ? 'You have 3 picks – choose wisely!' : picksAllowed === 4 ? '4 picks awarded – more chance for big totals!' : '5 picks! Maximum reveal opportunity!';
+  grid.innerHTML = '';
+  activePickGame.board.forEach(cell => {
+    const wrapper = document.createElement('div');
+    wrapper.className='pickCell';
+    wrapper.dataset.index = cell.index;
+    const img = document.createElement('img');
+    img.className='pickImg'; img.src = cell.image; img.alt = 'Bonus Pick';
+    wrapper.appendChild(img);
+    wrapper.addEventListener('click', ()=>onPickCellImage(cell.index, wrapper));
+    grid.appendChild(wrapper);
+  });
+  overlay.style.display='block';
+}
+function onPickCellImage(index, wrapper){
+  if (!activePickGame) return;
+  if (wrapper.classList.contains('picked')) return;
+  const before = activePickGame.picksMade;
+  activePickGame = pickBonusSquare(activePickGame, index);
+  if (activePickGame.picksMade === before) return; // invalid
+  const cell = activePickGame.board.find(c=>c.index===index);
+  // Mark picked
+  wrapper.classList.add('picked');
+  wrapper.classList.add('disabled');
+  // Inject record image behind (appears as pick image fades)
+  const record = document.createElement('img');
+  record.src = '../symbols/record.jpg';
+  record.alt = 'Record';
+  record.className='recordImg';
+  wrapper.appendChild(record);
+  // Multiplier text
+  const mult = document.createElement('div');
+  mult.className='multiplierText';
+  mult.textContent = 'x'+cell.multiplier;
+  wrapper.appendChild(mult);
+  log(`Bonus Pick: index=${index} multiplier=x${cell.multiplier} runningTotal=x${activePickGame.totalMultiplier} picksMade=${activePickGame.picksMade}/${activePickGame.picksAllowed}`);
+  if (activePickGame.complete) {
+    setTimeout(()=>finalizePickGame(), 900); // allow animation to finish
+  }
+}
+function updatePickSummary(){ /* legacy summary retained but hidden in new UI */ }
+function finalizePickGame(){
+  balance += activePickGame.win;
+  totalWin += activePickGame.win;
+  document.getElementById('lastWin').textContent = (parseFloat(document.getElementById('lastWin').textContent)+activePickGame.win).toFixed(2);
+  updateStats();
+  log(`Bonus Pick Complete: picks=${activePickGame.picksAllowed} multipliers=[${activePickGame.revealedMultipliers.join(',')}] totalMult=x${activePickGame.totalMultiplier} win=${activePickGame.win.toFixed(2)}`);
+  // Reveal all remaining cells with their hidden multipliers + record
+  const overlay = document.getElementById('bonusRoundOverlay');
+  if (overlay){
+    document.querySelectorAll('.pickCell').forEach(el=>{
+      const idx = parseInt(el.dataset.index,10);
+      const data = activePickGame.board.find(b=>b.index===idx);
+      if (!el.querySelector('.recordImg')){
+  const record = document.createElement('img'); record.src='../symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
+        const mult = document.createElement('div'); mult.className='multiplierText'; mult.textContent='x'+data.multiplier; el.appendChild(mult);
+      }
+      el.classList.add('finalReveal'); el.classList.add('disabled');
+    });
+    setTimeout(()=>{ overlay.classList.add('fadeOut'); }, 2500);
+    setTimeout(()=>{ overlay.style.display='none'; overlay.classList.remove('fadeOut'); }, 3300);
+  }
+  showBonusWinners(activePickGame);
+  if (pendingFreeSpins>0){ document.getElementById('fsState').classList.add('active'); document.getElementById('fsRemain').textContent=pendingFreeSpins.toString(); setTimeout(()=>{ if (pendingFreeSpins>0) spin(); },5200); }
+}
+function showBonusWinners(result){
+  const panel = document.getElementById('bonusWinPanel');
+  const details = document.getElementById('bonusWinDetails');
+  if (!panel || !details) return;
+  details.innerHTML = `You picked <strong>${result.picksAllowed}</strong> square(s)<br>Multipliers: ${result.revealedMultipliers.map(m=>'x'+m).join(' + ')} = <strong>x${result.totalMultiplier}</strong><br>Bonus Win: <strong>${result.win.toFixed(2)}</strong>`;
+  panel.style.display='flex';
+  setTimeout(()=>closeBonusPanel(),5000);
+}
+function closeBonusPanel(){
+  const panel = document.getElementById('bonusWinPanel');
+  const pickModal = document.getElementById('pickModal');
+  if (panel) panel.style.display='none';
+  if (pickModal && pickModal.style.display!=='none') pickModal.style.display='none';
+  activePickGame = null;
+}
+document.getElementById('bonusWinCloseBtn')?.addEventListener('click', ()=>closeBonusPanel());
+// Legacy buttons retained (modal no longer used) – safely guard
+document.getElementById('pickCloseBtn')?.addEventListener('click',()=>{ const m=document.getElementById('pickModal'); if(m) m.style.display='none'; activePickGame=null; });
+document.getElementById('pickRevealRestBtn')?.addEventListener('click',()=>{ /* deprecated */ });
+// New bonus overlay controls
+document.getElementById('bonusRevealBtn').addEventListener('click',()=>{
+  if (!activePickGame) return;
+  if (activePickGame.complete) return; // already revealed all via finalize
+  // Force completion by marking remaining picks as unpicked reveals (no win increase)
+  // We only show their multipliers without adding to player's total (design choice – adjust if all should count)
+  document.querySelectorAll('#bonusPicksGrid .pickCell').forEach(el=>{
+    const idx = parseInt(el.dataset.index,10);
+    const cell = activePickGame.board.find(b=>b.index===idx);
+    if (!el.classList.contains('picked')){
+      const record = document.createElement('img'); record.src='../public/symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
+      const mult = document.createElement('div'); mult.className='multiplierText'; mult.textContent='x'+cell.multiplier; el.appendChild(mult);
+      el.classList.add('finalReveal','disabled');
+    }
+  });
+  // End game (no change to already computed win)
+  activePickGame.complete = true;
+  setTimeout(()=>finalizePickGame(), 1200);
+});
+document.getElementById('bonusExitBtn').addEventListener('click',()=>{
+  const overlay = document.getElementById('bonusRoundOverlay');
+  if (overlay){ overlay.classList.add('fadeOut'); setTimeout(()=>{ overlay.style.display='none'; overlay.classList.remove('fadeOut'); },700); }
+  activePickGame=null;
+});
+async function spin(forceBonus=false){
+  try {
+  // Fixed stake: £1 total = 25 lines × £0.04
+  const betPerLine=0.04;
+  const totalSpinBet=pendingFreeSpins>0?0:1.00;
+  if(totalSpinBet>balance && pendingFreeSpins===0){ log('Insufficient balance'); autoRemaining=0; return; }
+  if(spinning) return; spinning=true; startSpin();
+  // Always clear lingering win lines immediately at spin start (auto or manual).
+  if (winLinesTimeout){ clearTimeout(winLinesTimeout); winLinesTimeout=null; }
+  clearWinLines();
+  if(pendingFreeSpins===0) balance-=totalSpinBet; totalBet+=totalSpinBet; setButtons(true);
+  if (forceBonus) { forceBonusSpin = true; }
+  const result=performSpin(betPerLine);
+  // Sequential reveal with tease slowdown
+  let teaseActivated=false; let teaseStartReel=-1; let teaseTargetType=null; let teaseTargetClass=null;
+  // Start cycles for all reels immediately (fast spinning look) using captured random start positions.
+  for(let reel=0; reel<5; reel++){ reelControllers.set(reel, beginReelCycle(reel, result.startPositions[reel])); }
+  const decelPromises=[];
+  for(let reel=0; reel<result.grid.length; reel++){
+    let delay = SPIN_TIME_PER_REEL + reel*REEL_STAGGER;
+    if (teaseActivated && reel>teaseStartReel) delay += TEASE_EXTRA_DELAY_PER_REEL;
+    await new Promise(r=>setTimeout(r, delay));
+    const p = reelControllers.get(reel).decelerate(result.grid[reel], teaseActivated && reel>teaseStartReel);
+    decelPromises.push(p);
+    await p; // ensure cells populated before tease detection for this reel
+    // If tease already active, immediately highlight any newly landed matching symbols on this reel
+    if (teaseActivated && teaseTargetType) {
+      for(let rIndex=0;rIndex<3;rIndex++){
+        const cell=document.querySelector(`.cell[data-pos='${reel}-${rIndex}']`);
+        if(cell && cell.dataset.sym===teaseTargetType){ cell.classList.add(teaseTargetClass,'pulse'); }
+      }
+    }
+    if(!teaseActivated && reel < result.grid.length-1){
+      let countFS=0, countBonus=0;
+      for(let c=0;c<=reel;c++){
+        for(let r=0;r<3;r++){ // only visible rows
+          const sym=result.grid[c][r];
+          if(sym==='S12') countFS++; else if(sym==='S13') countBonus++;
+        }
+      }
+      if(countFS===2 || countBonus===2){
+        teaseActivated=true; teaseStartReel=reel; log(`Tease: two ${(countFS===2?'free spins':'bonus')} symbols landed – slowing...`);
+        document.querySelectorAll('.cell').forEach(c=>c.classList.remove('anticipate-fs','anticipate-bonus','pulse'));
+        const targetType = countFS===2 ? 'S12' : 'S13';
+        const targetClass = countFS===2 ? 'anticipate-fs' : 'anticipate-bonus';
+        teaseTargetType = targetType; teaseTargetClass = targetClass;
+        // Highlight all landed reels including current reel now safely aligned
+        for(let cIndex=0;cIndex<=reel;cIndex++){
+          for(let rIndex=0;rIndex<3;rIndex++){
+            if(result.grid[cIndex][rIndex]===targetType){
+              const cell=document.querySelector(`.cell[data-pos='${cIndex}-${rIndex}']`);
+              if(cell) cell.classList.add(targetClass,'pulse');
+            }
+          }
+        }
+        // Initial dramatic pause before remaining reels
+        await new Promise(r=>setTimeout(r, TEASE_EXTRA_DELAY_FIRST));
+        // Play subtle tease sound
+        const audio=document.getElementById('teaseSound');
+        if(audio){ try { audio.currentTime=0; audio.play().catch(()=>{}); } catch(e){} }
+      }
+    }
+  }
+  spins++; balance+=result.totalWin; totalWin+=result.totalWin; document.getElementById('lastWin').textContent=result.totalWin.toFixed(2);
+  // Debug audit: landing window + raw scatter counts (visible rows only)
+  { const parts=[]; let visFS=0, visBonus=0; for(let c=0;c<5;c++){ const col=result.grid[c]; for(let r=0;r<3;r++){ if(col[r]==='S12') visFS++; else if(col[r]==='S13') visBonus++; } parts.push(`R${c+1}: ${col[0]},${col[1]},${col[2]}`); } log(`Spin Result Window: ${parts.join(' | ')} | FS=${visFS} B2=${visBonus}`); }
+  const bonusCount = result.bonusPickCount || 0; // defer bonus pick start until reels + delay complete
+  const fsAward = result.triggeredFreeSpins || 0;
+  // (Removed immediate startPickGame; will trigger after reel decels and delay)
+  if (fsAward>0 && !(forceBonus && bonusCount>0)) { pendingFreeSpins += fsAward; log(`Free Spins Triggered: +${fsAward} (total ${pendingFreeSpins})`); }
+  else if (fsAward>0 && forceBonus && bonusCount>0) { pendingFreeSpins += fsAward; log('Free Spins also landed but deferred until bonus completes'); }
+  if (pendingFreeSpins>0 && bonusCount===0 && !activePickGame) {
+    // Begin first free spin automatically after short delay
+    document.getElementById('fsState').classList.add('active');
+    document.getElementById('fsRemain').textContent=pendingFreeSpins.toString();
+    setTimeout(()=>{
+      if (pendingFreeSpins>0 && !spinning) {
+        pendingFreeSpins--; // consume one
+        document.getElementById('fsRemain').textContent=pendingFreeSpins.toString();
+        spin();
+      }
+    }, 900);
+  } else if (pendingFreeSpins===0 || bonusCount>0) {
+    document.getElementById('fsState').classList.remove('active');
+  }
+  // (Moved anticipation highlight to post-deceleration so glow isn't cleared by reel landing)
+  // Wait until all reels fully stopped before highlighting win lines
+  await Promise.all(decelPromises);
+  // Reel-wide glow removed; no track-level classes to clear
+  // Post-decel two-or-more scatter glow refresh
+  // Final consolidation: ensure all FS/Bonus symbols glow & pulse if 2+ present
+  const fsTotal = result.scatterCount;
+  const bonusTotal = result.scatter2Count;
+  document.querySelectorAll('.cell').forEach(cell=>{
+    const sym = cell.dataset.sym;
+    if (fsTotal >=2 && sym==='S12') { cell.classList.add('anticipate-fs','pulse'); }
+    else if (bonusTotal >=2 && sym==='S13') { cell.classList.add('anticipate-bonus','pulse'); }
+    else { cell.classList.remove('anticipate-fs','anticipate-bonus','pulse'); }
+  });
+  drawLines(result.lineWins); updateStats(); spinning=false; setButtons(false);
+  // Launch bonus pick after 3s delay if triggered
+  if (bonusCount>0){
+    log(`Bonus Pick Triggered: ${bonusCount} picks available (showing in 2s...)`);
+    setTimeout(()=>{ startPickGame(bonusCount, betPerLine*25); },2000);
+  }
+  // Only continue auto spins if no bonus pick pending
+  if(autoRemaining>0){
+    autoRemaining--;
+    if(autoRemaining>0 && bonusCount===0) setTimeout(()=>spin(),300);
+    else if (bonusCount>0) { log('Auto-spin paused for bonus feature'); }
+  }
+  } catch(e){
+    log('Spin crash: '+ (e && e.message ? e.message : e));
+    console.error(e);
+    spinning=false; setButtons(false);
+  }
+}
+
+// Init
+initGrid(); updateStats();
+log('Fixed Stake Active: £1 total (25 lines @ £0.04 per line)');
+// Display initial window explicitly from reel data (index 0..2) and log
+function log(msg){ const el=document.getElementById('log'); const line=document.createElement('div'); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; el.prepend(line); }
+for(let c=0;c<5;c++){
+  for(let r=0;r<3;r++){
+    const cell=document.querySelector(`.cell[data-pos='${c}-${r}']`);
+    if(cell){
+      cell.innerHTML='';
+      const sym = reels[c][r];
+      const img=document.createElement('img'); img.className='symbol-img'; img.src = symbolImage[sym]; img.alt = sym; cell.appendChild(img);
+    }
+  }
+}
+// Log initial reel window (top 3) referencing underlying strip index 0 start
+(function logInitial(){
+  const parts=[]; for(let c=0;c<5;c++){ const top=[reels[c][0],reels[c][1],reels[c][2]].join(','); parts.push(`R${c+1}[0]: ${top}`); }
+  log('Initial Reel Window: '+parts.join(' | '));
+})();
+
+// Log paytable & feature awards so players see math upfront (logged last so appears at top due to prepend ordering)
+function logPaytable(){
+  const ptLines=[];
+  const order=['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'];
+  order.forEach(sym=>{
+    const p=paytable[sym]; if(!p) return; const e3=p[3]!==undefined?`3:${p[3]}`:''; const e4=p[4]!==undefined?`4:${p[4]}`:''; const e5=p[5]!==undefined?`5:${p[5]}`:''; ptLines.push(`${sym}(${[e3,e4,e5].filter(Boolean).join(' ')})`);
+  });
+  log('Paytable (line win multipliers per 1 stake/line): '+ptLines.join(' | '));
+  const scat = Object.keys(scatterPayout).map(k=>`${k}=${scatterPayout[+k]}x total bet`).join(' ');
+  log('Scatter (Free Spins symbol S12) pays: '+scat);
+  const fsAwards = Object.keys(freeSpinAwards).map(k=>`${k}->${freeSpinAwards[+k]}FS`).join(' ');
+  log('Free Spins Awards (S12 count): '+fsAwards);
+  log('Bonus Pick (S13) awards picks: 3+ bonus symbols -> equal to symbol count (3/4/5). Multipliers pool: x1,x2,x5,x10,x20,x25,x50,x100 (sum applied to total stake).');
+  log('Wild (S11) substitutes; current build: DOES NOT adjust pays separately (no doubling here in standalone).');
+}
+logPaytable();
+
+// Events
+ document.getElementById('spinBtn').addEventListener('click',()=>{ if (winLinesTimeout){ clearTimeout(winLinesTimeout); winLinesTimeout=null; } clearWinLines(); spin(); });
+ document.getElementById('autoBtn').addEventListener('click',()=>{ if(autoRemaining===0){ autoRemaining=50; spin(); }});
+ document.getElementById('forceFSBtn').addEventListener('click',()=>{
+   if(spinning) return;
+   log('Force: Attempting free spins spin (>=3 S12)');
+   const originalPerform = performSpin;
+   window.performSpin = function(betPerLine){
+     const res = originalPerform(betPerLine);
+      let fsCount = res.scatterCount;
+      if (fsCount < 3) {
+        let needed = 3 - fsCount;
+        // Inject whole contiguous triples on selected reels to guarantee visual alignment
+        for (let reelIndex=0; reelIndex<reels.length && needed>0; reelIndex++) {
+          // Skip reels already containing at least one S12 in visible window
+          let hasFS=false; for (let rr=0; rr<3; rr++){ if (res.grid[reelIndex][rr]==='S12') { hasFS=true; break; } }
+          if (hasFS) continue;
+          const strip = reels[reelIndex];
+            // Find start index whose 3-window contains at least one S12
+            let startAt=-1;
+            for (let i=0;i<strip.length;i++){
+              if (strip[i]==='S12' || strip[(i+1)%strip.length]==='S12' || strip[(i+2)%strip.length]==='S12'){ startAt=i; break; }
+            }
+            if (startAt===-1) continue;
+            res.startPositions[reelIndex] = startAt;
+            res.grid[reelIndex] = [strip[startAt], strip[(startAt+1)%strip.length], strip[(startAt+2)%strip.length]];
+            let addedHere=0; for (let k=0;k<3;k++) if (res.grid[reelIndex][k]==='S12') addedHere++;
+            needed -= Math.max(1, addedHere);
+        }
+      }
+      // Recalculate scatter count after contiguous injection
+      fsCount = 0; for(let c=0;c<res.grid.length;c++) for(let r=0;r<3;r++) if(res.grid[c][r]==='S12') fsCount++;
+      res.scatterCount = fsCount;
+      res.triggeredFreeSpins = (fsCount>=3)? (freeSpinAwards[fsCount]||freeSpinAwards[3]||0) : 0;
+      log(`ForceFS Override: finalCount=${fsCount} award=${res.triggeredFreeSpins}`);
+     return res;
+   };
+   spin();
+   window.performSpin = originalPerform;
+ });
+ document.getElementById('forceBonusBtn').addEventListener('click',()=>{ if(spinning) return; log('Force: Attempting bonus spin (>=3 B2)'); spin(true); });
+// Diagnostics: confirm bonus injection yields picks
+// (Optional: could expand to ensure at least 3 S13 placed when forceBonusSpin true.)
+ // Simulation button – run 10,000 spins fast and output aggregated metrics
+ document.getElementById('simBtn').addEventListener('click',()=>{
+   if (spinning) { log('Wait for current spin to finish before simming'); return; }
+   simulateSpins(10000);
+ });
+ // Timing sliders live update
+ const baseReelMs=document.getElementById('baseReelMs');
+ const staggerMs=document.getElementById('staggerMs');
+ const teaseFirstMs=document.getElementById('teaseFirstMs');
+ const teasePerMs=document.getElementById('teasePerMs');
+ const baseReelMsVal=document.getElementById('baseReelMsVal');
+ const staggerMsVal=document.getElementById('staggerMsVal');
+ const teaseFirstMsVal=document.getElementById('teaseFirstMsVal');
+ const teasePerMsVal=document.getElementById('teasePerMsVal');
+ function updateTimingDisplay(){
+  baseReelMsVal.textContent=SPIN_TIME_PER_REEL+'ms';
+  staggerMsVal.textContent=REEL_STAGGER+'ms';
+  teaseFirstMsVal.textContent=TEASE_EXTRA_DELAY_FIRST+'ms';
+  teasePerMsVal.textContent=TEASE_EXTRA_DELAY_PER_REEL+'ms';
+ }
+ baseReelMs.addEventListener('input',()=>{ SPIN_TIME_PER_REEL=parseInt(baseReelMs.value,10); updateTimingDisplay(); });
+ staggerMs.addEventListener('input',()=>{ REEL_STAGGER=parseInt(staggerMs.value,10); updateTimingDisplay(); });
+ teaseFirstMs.addEventListener('input',()=>{ TEASE_EXTRA_DELAY_FIRST=parseInt(teaseFirstMs.value,10); updateTimingDisplay(); });
+ teasePerMs.addEventListener('input',()=>{ TEASE_EXTRA_DELAY_PER_REEL=parseInt(teasePerMs.value,10); updateTimingDisplay(); });
+ document.getElementById('timingReset').addEventListener('click',()=>{
+  SPIN_TIME_PER_REEL=280; REEL_STAGGER=120; TEASE_EXTRA_DELAY_FIRST=900; TEASE_EXTRA_DELAY_PER_REEL=450;
+  baseReelMs.value='280'; staggerMs.value='120'; teaseFirstMs.value='900'; teasePerMs.value='450'; updateTimingDisplay();
+ });
+ updateTimingDisplay();
+
+ // --- Bulk Simulation Logic ---
+ let simRunning = false;
+ function simulateSpins(target){
+   if (simRunning) { log('Simulation already running'); return; }
+   simRunning = true;
+   const betPerLine=parseFloat(document.getElementById('bet').value)||1;
+   let pendingFree=0;
+   let paidSpins=0; let totalSpins=0;
+   let totalBetSpent=0; let totalWinSim=0; let winSpins=0;
+  let freeSpinsHits=0; let bonusHits=0; let teaseCountFS=0; let teaseCountBonus=0; let wildCount=0;
+   const picksMultipliers=[1,2,5,10,20,25,50,100];
+   const batchSize = 500; let processed = 0;
+   function runBatch(){
+     const end = Math.min(processed + batchSize, target);
+     for(let i=processed; i<end; i++){
+       const result = performSpin(betPerLine);
+       const isFree = pendingFree>0;
+       if (!isFree){ paidSpins++; totalBetSpent += betPerLine*25; }
+       totalSpins++;
+       if (result.scatterCount>=3){ pendingFree += (freeSpinAwards[result.scatterCount]||0); freeSpinsHits++; }
+       if (result.scatter2Count>=3){
+         bonusHits++;
+         const picks = Math.min(result.scatter2Count,5);
+         let boardMults=[]; for(let p=0;p<picks;p++){ boardMults.push(picksMultipliers[Math.floor(Math.random()*picksMultipliers.length)]); }
+         const bonusWin = boardMults.reduce((a,b)=>a+b,0) * betPerLine*25;
+         totalWinSim += bonusWin;
+       }
+       if (result.scatterCount===2) teaseCountFS++;
+       if (result.scatter2Count===2) teaseCountBonus++;
+       // Count wilds in visible 5x3 (grid columns already shaped)
+       for(let rc=0; rc<result.grid.length; rc++) {
+         for(let rr=0; rr<result.grid[rc].length; rr++) {
+           if (result.grid[rc][rr] === 'S11') wildCount++;
+         }
+       }
+       totalWinSim += result.totalWin;
+       if (result.totalWin > 0) winSpins++;
+       if (pendingFree>0 && !isFree) { /* next iterations consume */ }
+       if (isFree) { pendingFree--; }
+     }
+     processed = end;
+     if (processed < target) {
+       if (processed % (batchSize*2) === 0) {
+         log(`Sim progress: ${processed}/${target}`);
+       }
+       setTimeout(runBatch,0);
+     } else {
+  const rtp = (totalWinSim / (totalBetSpent||1))*100;
+  const hitRate = (winSpins / totalSpins)*100;
+  const freeRate = (freeSpinsHits / totalSpins)*100;
+  const bonusRate = (bonusHits / totalSpins)*100;
+  const wildsPerSpin = wildCount / totalSpins;
+  log(`Sim ${target.toLocaleString()}: RTP=${rtp.toFixed(2)}% HitRate=${hitRate.toFixed(2)}% FreeSpinsRate=${freeRate.toFixed(2)}% BonusRate=${bonusRate.toFixed(2)}% TeaseFS=${teaseCountFS} TeaseBonus=${teaseCountBonus} Wilds=${wildCount} Wilds/Spin=${wildsPerSpin.toFixed(2)}`);
+       simRunning = false;
+     }
+   }
+   log(`Simulation started: ${target.toLocaleString()} spins`);
+   runBatch();
+ }
+</script>
+</body>
+</html>
