@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -p .",
+    "typecheck": "tsc -p .",
+    "build": "tsc -p . && vite build && cp -R standalone web-dist/standalone",
     "simulate": "node dist/sim/simulate.js",
-  "dev": "vite --host"
+    "dev": "vite --host"
   },
   "devDependencies": {
     "typescript": "5.4.5",
