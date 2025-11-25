@@ -18,8 +18,10 @@
     body { justify-content:flex-start; }
     #gameBoard { 
       width:100vw; 
-      transform:scale(1.724); /* Zoom so 58% slot width becomes 100vw */
-      transform-origin:center center;
+      /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
+      /* Then shift left to center: translate(-20.5% * 1.724) = -35.3% to align reel 1 with left edge */
+      transform:scale(1.724) translateX(-20.5%);
+      transform-origin:left center;
     }
     #controls { width:100vw; margin:0.5rem 0; }
   }
