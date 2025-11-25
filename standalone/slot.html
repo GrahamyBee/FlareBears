@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <title>Fluffy Favourites Slot (Standalone)</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <style>
-  body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; display:flex; flex-direction:column; align-items:center; }
-  header { padding:1rem 0; }
+  /* Base mobile-first layout */
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; overflow-x:hidden; touch-action:manipulation; }
+  header { padding:0.5rem 0; text-align:center; }
+  header h1 { font-size:1.2rem; margin:0.25rem 0; }
   .stage { position:relative; }
-  #slot { width:530px; height:300px; position:relative; margin:1rem 0; }
+  /* Responsive game board - scales down for mobile */
+  #gameBoard { position:relative; width:min(900px, 95vw); height:auto; aspect-ratio:3/2; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center; margin:0 auto; }
+  #slot { width:min(530px, 59%); height:auto; aspect-ratio:530/300; position:absolute; top:23%; left:20.5%; }
   #reelBack { position:absolute; inset:0; background:#fff; border:2px solid #333; border-radius:12px; box-shadow:inset 0 0 10px rgba(0,0,0,.3); }
   .cell { width:100px; height:100px; background:transparent; border:none; border-radius:0; display:flex; align-items:center; justify-content:center; position:absolute; top:0; left:0; pointer-events:none; z-index:5; }
   /* --- Bonus Round Overlay Styles --- */
-  #bonusRoundOverlay { position:absolute; top:0; left:0; width:900px; height:600px; display:none; z-index:900; background:url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; }
-  #bonusRoundInner { position:absolute; inset:0; display:flex; flex-direction:column; padding:32px 42px 24px; box-sizing:border-box; }
-  #bonusHeader { font-size:2.2rem; margin:0 0 8px; font-weight:700; text-align:center; letter-spacing:.5px; text-shadow:0 2px 8px rgba(0,0,0,.5); }
-  #bonusSub { font-size:.95rem; text-align:center; margin:0 0 18px; opacity:.85; }
-  #bonusPicksGrid { flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:26px 34px; align-content:center; justify-items:center; }
-  .pickCell { position:relative; width:230px; height:230px; cursor:pointer; border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.55), inset 0 0 18px rgba(255,255,255,.08); backdrop-filter:blur(1px); transition:transform .35s cubic-bezier(.25,.75,.25,1), box-shadow .35s; }
+  #bonusRoundOverlay { position:fixed; inset:0; width:100%; height:100%; display:none; z-index:900; background:url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; overflow-y:auto; }
+  #bonusRoundInner { position:relative; width:100%; min-height:100%; display:flex; flex-direction:column; padding:min(32px, 4vw) min(42px, 5vw) min(24px, 3vw); box-sizing:border-box; }
+  #bonusHeader { font-size:clamp(1.3rem, 4vw, 2.2rem); margin:0 0 8px; font-weight:700; text-align:center; letter-spacing:.5px; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+  #bonusSub { font-size:clamp(0.8rem, 2vw, 0.95rem); text-align:center; margin:0 0 18px; opacity:.85; }
+  #bonusPicksGrid { flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(min(180px, 28vw), 1fr)); gap:clamp(16px, 3vw, 34px); align-content:center; justify-items:center; max-width:800px; margin:0 auto; }
+  .pickCell { position:relative; width:100%; aspect-ratio:1; max-width:230px; cursor:pointer; border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.55), inset 0 0 18px rgba(255,255,255,.08); backdrop-filter:blur(1px); transition:transform .35s cubic-bezier(.25,.75,.25,1), box-shadow .35s; }
   .pickCell:hover { transform:translateY(-6px) scale(1.03); box-shadow:0 10px 24px rgba(0,0,0,.6), inset 0 0 22px rgba(255,255,255,.12); }
   .pickImg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.94) saturate(1.05); transition:opacity .6s ease, transform .6s ease; }
   /* When picked, keep original image visible but dimmed behind record */
@@ -79,22 +84,61 @@
   .cell.finalSharp img { filter:none; }
   .symbol-img { width:100%; height:100%; object-fit:contain; }
   #lineOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:20; }
-  #controls { display:flex; gap:1rem; align-items:center; }
-  button { background:#ff4fa3; color:#fff; border:none; padding:.75rem 1.25rem; border-radius:6px; font-size:1rem; cursor:pointer; font-weight:600; }
-  button:disabled { opacity:.4; cursor:default; }
-  #log { max-width:640px; font-size:.75rem; line-height:1.4; background:#181818; padding:1rem; border-radius:8px; height:160px; overflow:auto; }
-  .stat-bar { display:flex; gap:2rem; flex-wrap:wrap; font-size:.85rem; }
-  .fs-banner { background:#673ab7; padding:.4rem .8rem; border-radius:4px; margin-left:1rem; display:none; }
+  #controls { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; justify-content:center; padding:0.5rem; max-width:100%; }
+  button { background:#ff4fa3; color:#fff; border:none; padding:clamp(0.5rem, 2vw, 0.75rem) clamp(0.8rem, 3vw, 1.25rem); border-radius:6px; font-size:clamp(0.8rem, 2.2vw, 1rem); cursor:pointer; font-weight:600; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  button:active { transform:scale(0.95); }
+  button:disabled { opacity:.4; cursor:default; transform:none; }
+  #controls label { font-size:clamp(0.75rem, 2vw, 0.9rem); white-space:nowrap; }
+  #controls input[type="number"] { width:clamp(50px, 10vw, 70px); font-size:clamp(0.75rem, 2vw, 0.9rem); }
+  #log { width:min(640px, 92vw); font-size:clamp(0.65rem, 1.8vw, 0.75rem); line-height:1.4; background:#181818; padding:0.75rem; border-radius:8px; height:clamp(100px, 20vh, 160px); overflow:auto; margin:0.5rem auto; }
+  .stat-bar { display:flex; gap:clamp(0.75rem, 3vw, 2rem); flex-wrap:wrap; font-size:clamp(0.75rem, 2vw, 0.85rem); justify-content:center; padding:0.5rem; }
+  .fs-banner { background:#673ab7; padding:.4rem .8rem; border-radius:4px; margin-left:0.5rem; display:none; font-size:clamp(0.75rem, 2vw, 0.9rem); }
   .fs-banner.active { display:inline-block; }
+  #timingControls { display:flex; flex-wrap:wrap; gap:clamp(0.5rem, 2vw, 1rem); padding:.5rem 1rem; background:#1c1c1c; border-radius:8px; margin:.5rem auto; max-width:min(95vw, 900px); font-size:clamp(0.65rem, 1.8vw, 0.7rem); }
+  #timingControls label { display:flex; flex-direction:column; min-width:clamp(80px, 15vw, 120px); }
+  #timingControls input[type="range"] { width:100%; }
+  #timingControls button { align-self:flex-end; padding:clamp(0.35rem, 1.5vw, 0.45rem) clamp(0.6rem, 2vw, 0.8rem); }
+  
+  /* Landscape mobile optimization - bring controls closer to reels */
+  @media (orientation: landscape) and (max-height: 600px) {
+    body { flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:flex-start; padding:0.5rem; }
+    header { width:100%; order:1; padding:0.25rem 0; }
+    header h1 { font-size:1rem; }
+    #gameBoard { order:2; width:min(60vw, 550px); margin:0 0.5rem 0 0; }
+    #slot { width:58%; top:23%; left:21%; }
+    #controls { order:3; flex-direction:column; gap:0.4rem; padding:0.25rem; max-width:35vw; align-items:stretch; }
+    #controls > * { width:100%; }
+    #controls button { padding:0.5rem 0.8rem; font-size:0.85rem; }
+    .stat-bar { order:4; width:100%; gap:0.75rem; font-size:0.7rem; padding:0.25rem; }
+    #log { order:5; width:100%; height:80px; font-size:0.65rem; margin:0.25rem 0; }
+    #timingControls { order:6; width:100%; padding:0.25rem 0.5rem; gap:0.4rem; font-size:0.6rem; }
+    #timingControls label { min-width:70px; }
+  }
+  
+  /* Portrait mobile - stack vertically, scale game board */
+  @media (orientation: portrait) and (max-width: 768px) {
+    #gameBoard { width:95vw; margin:0.5rem auto; }
+    #slot { width:58%; }
+    #controls { padding:0.5rem; gap:0.4rem; }
+    #log { height:120px; }
+  }
+  
+  /* Very small screens - further compact */
+  @media (max-width: 400px) {
+    header h1 { font-size:1rem; }
+    button { font-size:0.75rem; padding:0.5rem 0.8rem; }
+    #controls { gap:0.3rem; }
+    .stat-bar { gap:0.5rem; font-size:0.7rem; }
+  }
 </style>
 </head>
 <body>
 <header>
   <h1>Fluffy Favourites Slot <span id="fsState" class="fs-banner">Free Spins: <span id="fsRemain"></span></span></h1>
 </header>
-<div id="gameBoard" style="position:relative; width:900px; height:600px; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center;">
-  <div id="slot" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"><div id="reelBack"></div></div>
-  <svg id="lineOverlay" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"></svg>
+<div id="gameBoard">
+  <div id="slot"><div id="reelBack"></div></div>
+  <svg id="lineOverlay" style="position:absolute; top:23%; left:20.5%; width:59%; height:auto; aspect-ratio:530/300; pointer-events:none; overflow:visible;"></svg>
   <!-- Bonus Round Full Overlay (covers entire game board) -->
   <div id="bonusRoundOverlay">
     <div id="bonusRoundInner">
