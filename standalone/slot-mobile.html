@@ -771,6 +771,8 @@ log('Fixed Stake Active: £1 total (25 lines @ £0.04 per line)');
 function log(msg){ const el=document.getElementById('log'); const line=document.createElement('div'); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; el.prepend(line); }
 // Removed: Don't add static images to cells - symbols are only in reel tracks
 // The cells are just overlay containers for effects and glow animations
+// Create reel tracks on page load so symbols are visible immediately
+ensureReelTracks();
 // Log initial reel window (top 3) referencing underlying strip index 0 start
 (function logInitial(){
   const parts=[]; for(let c=0;c<5;c++){ const top=[reels[c][0],reels[c][1],reels[c][2]].join(','); parts.push(`R${c+1}[0]: ${top}`); }
