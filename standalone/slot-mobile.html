@@ -20,10 +20,12 @@
       width:100vw; 
       /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
       /* Then shift left to center: translate(-20.5% * 1.724) = -35.3% to align reel 1 with left edge */
-      transform:scale(1.724) translateX(-20.5%);
-      transform-origin:left center;
+      /* Move down to show top of background */
+      transform:scale(1.724) translate(-20.5%, 15%);
+      transform-origin:left top;
+      margin-bottom:1rem; /* Space before controls */
     }
-    #controls { width:100vw; margin:0.5rem 0; }
+    #controls { width:100vw; margin:1rem 0; clear:both; }
   }
   
   /* Landscape: scale to fit height with controls above visible line */
