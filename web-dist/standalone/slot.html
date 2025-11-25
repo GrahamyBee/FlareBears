@@ -8,11 +8,12 @@
   body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; display:flex; flex-direction:column; align-items:center; }
   header { padding:1rem 0; }
   .stage { position:relative; }
-  #slot { width:530px; height:300px; position:relative; margin:1rem 0; }
+  #gameBoard { position:relative; width:900px; height:600px; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center; margin:1rem 0; }
+  #slot { width:530px; height:300px; position:absolute; top:140px; left:185px; }
   #reelBack { position:absolute; inset:0; background:#fff; border:2px solid #333; border-radius:12px; box-shadow:inset 0 0 10px rgba(0,0,0,.3); }
   .cell { width:100px; height:100px; background:transparent; border:none; border-radius:0; display:flex; align-items:center; justify-content:center; position:absolute; top:0; left:0; pointer-events:none; z-index:5; }
   /* --- Bonus Round Overlay Styles --- */
-  #bonusRoundOverlay { position:absolute; top:0; left:0; width:900px; height:600px; display:none; z-index:900; background:url('../public/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; }
+  #bonusRoundOverlay { position:absolute; top:0; left:0; width:900px; height:600px; display:none; z-index:900; background:url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; }
   #bonusRoundInner { position:absolute; inset:0; display:flex; flex-direction:column; padding:32px 42px 24px; box-sizing:border-box; }
   #bonusHeader { font-size:2.2rem; margin:0 0 8px; font-weight:700; text-align:center; letter-spacing:.5px; text-shadow:0 2px 8px rgba(0,0,0,.5); }
   #bonusSub { font-size:.95rem; text-align:center; margin:0 0 18px; opacity:.85; }
@@ -78,7 +79,7 @@
   .cell.reducingBlur img { transition:filter .35s ease; filter:blur(2px) brightness(.92) saturate(.95); }
   .cell.finalSharp img { filter:none; }
   .symbol-img { width:100%; height:100%; object-fit:contain; }
-  #lineOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:20; }
+  #lineOverlay { position:absolute; top:140px; left:185px; width:530px; height:300px; pointer-events:none; overflow:visible; z-index:20; }
   #controls { display:flex; gap:1rem; align-items:center; }
   button { background:#ff4fa3; color:#fff; border:none; padding:.75rem 1.25rem; border-radius:6px; font-size:1rem; cursor:pointer; font-weight:600; }
   button:disabled { opacity:.4; cursor:default; }
@@ -92,7 +93,7 @@
 <header>
   <h1>Fluffy Favourites Slot <span id="fsState" class="fs-banner">Free Spins: <span id="fsRemain"></span></span></h1>
 </header>
-<div id="gameBoard" style="position:relative; width:900px; height:600px; background:url('../symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center;">
+<div id="gameBoard" style="position:relative; width:900px; height:600px; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; display:flex; align-items:center; justify-content:center;">
   <div id="slot" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"><div id="reelBack"></div></div>
   <svg id="lineOverlay" style="position:absolute; top:140px; left:185px; width:530px; height:300px;"></svg>
   <!-- Bonus Round Full Overlay (covers entire game board) -->
@@ -185,22 +186,22 @@ const reels = [
 // Updated mapping using user-provided JPEG assets
 const symbolImage = {
   // High
-  S1:'../symbols/symbol 1.jpg',
-  S2:'../symbols/symbol 2.jpg',
-  S3:'../symbols/symbol 3.jpg',
-  S4:'../symbols/symbol 4.jpg',
+  S1:'/FlareBears/symbols/symbol 1.jpg',
+  S2:'/FlareBears/symbols/symbol 2.jpg',
+  S3:'/FlareBears/symbols/symbol 3.jpg',
+  S4:'/FlareBears/symbols/symbol 4.jpg',
   // Medium
-  S5:'../symbols/symbol 5.jpg',
-  S6:'../symbols/symbol 6.jpg',
-  S7:'../symbols/symbol 7.jpg',
+  S5:'/FlareBears/symbols/symbol 5.jpg',
+  S6:'/FlareBears/symbols/symbol 6.jpg',
+  S7:'/FlareBears/symbols/symbol 7.jpg',
   // Low
-  S8:'../symbols/symbol 8.jpg',
-  S9:'../symbols/symbol 9.jpg',
-  S10:'../symbols/symbol 10.jpg',
+  S8:'/FlareBears/symbols/symbol 8.jpg',
+  S9:'/FlareBears/symbols/symbol 9.jpg',
+  S10:'/FlareBears/symbols/symbol 10.jpg',
   // Feature
-  S11:'../symbols/wild symbol.jpg',
-  S12:'../symbols/free spins symbol.jpg',
-  S13:'../symbols/Bonus symbol.jpg'
+  S11:'/FlareBears/symbols/wild symbol.jpg',
+  S12:'/FlareBears/symbols/free spins symbol.jpg',
+  S13:'/FlareBears/symbols/Bonus symbol.jpg'
 };
 // External simple name -> internal code mapping
 const externalSymbolMap = {
@@ -491,12 +492,12 @@ function createBonusPickBoard(picksAllowed, baseBet){
   const board = [];
   // Shuffle pick images each round for random fixed arrangement
   const pickImages = [
-  '../symbols/Bonus pick 1.jpg',
-  '../symbols/Bonus pick 2.jpg',
-  '../symbols/Bonus pick 3.jpg',
-  '../symbols/Bonus pick 4.jpg',
-  '../symbols/Bonus pick 5.jpg',
-  '../symbols/Bonus pick 6.jpg'
+  '/FlareBears/symbols/Bonus pick 1.jpg',
+  '/FlareBears/symbols/Bonus pick 2.jpg',
+  '/FlareBears/symbols/Bonus pick 3.jpg',
+  '/FlareBears/symbols/Bonus pick 4.jpg',
+  '/FlareBears/symbols/Bonus pick 5.jpg',
+  '/FlareBears/symbols/Bonus pick 6.jpg'
   ].sort(()=>Math.random()-0.5);
   for (let i=0;i<6;i++) board.push({ index:i, image: pickImages[i], multiplier: allMultipliers[rand(allMultipliers.length)], picked:false });
   return { picksAllowed, baseBet, board, picksMade:0, revealedMultipliers:[], totalMultiplier:0, win:0, complete:false };
@@ -546,7 +547,7 @@ function onPickCellImage(index, wrapper){
   wrapper.classList.add('disabled');
   // Inject record image behind (appears as pick image fades)
   const record = document.createElement('img');
-  record.src = '../symbols/record.jpg';
+  record.src = '/FlareBears/symbols/record.jpg';
   record.alt = 'Record';
   record.className='recordImg';
   wrapper.appendChild(record);
@@ -574,7 +575,7 @@ function finalizePickGame(){
       const idx = parseInt(el.dataset.index,10);
       const data = activePickGame.board.find(b=>b.index===idx);
       if (!el.querySelector('.recordImg')){
-  const record = document.createElement('img'); record.src='../symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
+  const record = document.createElement('img'); record.src='/FlareBears/symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
         const mult = document.createElement('div'); mult.className='multiplierText'; mult.textContent='x'+data.multiplier; el.appendChild(mult);
       }
       el.classList.add('finalReveal'); el.classList.add('disabled');
@@ -614,7 +615,7 @@ document.getElementById('bonusRevealBtn').addEventListener('click',()=>{
     const idx = parseInt(el.dataset.index,10);
     const cell = activePickGame.board.find(b=>b.index===idx);
     if (!el.classList.contains('picked')){
-      const record = document.createElement('img'); record.src='../public/symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
+  const record = document.createElement('img'); record.src='/FlareBears/symbols/record.jpg'; record.alt='Record'; record.className='recordImg'; el.appendChild(record);
       const mult = document.createElement('div'); mult.className='multiplierText'; mult.textContent='x'+cell.multiplier; el.appendChild(mult);
       el.classList.add('finalReveal','disabled');
     }
@@ -781,6 +782,15 @@ function logPaytable(){
   log('Free Spins Awards (S12 count): '+fsAwards);
   log('Bonus Pick (S13) awards picks: 3+ bonus symbols -> equal to symbol count (3/4/5). Multipliers pool: x1,x2,x5,x10,x20,x25,x50,x100 (sum applied to total stake).');
   log('Wild (S11) substitutes; current build: DOES NOT adjust pays separately (no doubling here in standalone).');
+  monitorImages();
+}
+// Diagnostics: monitor image load failures
+function monitorImages(){
+  document.querySelectorAll('img').forEach(im=>{
+    if(im.dataset.monitored) return;
+    im.dataset.monitored='1';
+    im.addEventListener('error',()=>{ try { log('Image load failed: '+im.src); } catch(e){} });
+  });
 }
 logPaytable();
 
