@@ -10,13 +10,17 @@
   header { display:none; } /* Hidden - title is on background image */
   .stage { position:relative; }
   /* Mobile-optimized game board - maximize screen usage, move to top */
-  #gameBoard { position:relative; width:100vw; aspect-ratio:3/2; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; margin:0 auto; }
+  #gameBoard { position:relative; width:100vw; aspect-ratio:3/2; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; margin:0 auto; overflow:hidden; }
   #slot { width:58%; height:auto; aspect-ratio:530/300; position:absolute; top:28%; left:20.5%; } /* Moved up 2% from 30% to 28% */
   
-  /* Portrait: maximize width, stack controls below */
+  /* Portrait: zoom in so reels fill full width (reel 1-5 edge to edge) */
   @media (orientation: portrait) {
     body { justify-content:flex-start; }
-    #gameBoard { width:100vw; }
+    #gameBoard { 
+      width:100vw; 
+      transform:scale(1.724); /* Zoom so 58% slot width becomes 100vw */
+      transform-origin:center center;
+    }
     #controls { width:100vw; margin:0.5rem 0; }
   }
   
