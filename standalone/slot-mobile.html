@@ -14,7 +14,8 @@
   #gameBoard { position:relative; width:96vw; max-width:500px; aspect-ratio:3/2; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; margin:0.5rem auto; }
   #slot { width:58%; height:auto; aspect-ratio:530/300; position:absolute; top:23%; left:20.5%; }
   #reelBack { position:absolute; inset:0; background:#fff; border:2px solid #333; border-radius:12px; box-shadow:inset 0 0 10px rgba(0,0,0,.3); }
-  .cell { width:100px; height:100px; background:transparent; border:none; border-radius:0; display:flex; align-items:center; justify-content:center; position:absolute; top:0; left:0; pointer-events:none; z-index:5; }
+  /* Scale cells to 18.87% of slot width (100px/530px = 0.1887) */
+  .cell { width:18.87%; aspect-ratio:1; background:transparent; border:none; border-radius:0; display:flex; align-items:center; justify-content:center; position:absolute; top:0; left:0; pointer-events:none; z-index:5; }
   /* --- Bonus Round Overlay Styles --- */
   #bonusRoundOverlay { position:fixed; inset:0; width:100%; height:100%; display:none; z-index:900; background:url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; box-shadow:0 0 40px rgba(0,0,0,.6) inset; overflow-y:auto; }
   #bonusRoundInner { position:relative; width:100%; min-height:100%; display:flex; flex-direction:column; padding:1.5rem 1rem 1rem; box-sizing:border-box; }
@@ -43,7 +44,7 @@
   /* Distinct anticipation glow */
   /* Refined glow: remove square border; use circular halo centered over symbol area */
   .cell.anticipate-fs, .cell.anticipate-bonus { border:none; box-shadow:none; animation:none; }
-  .cell.anticipate-fs::before, .cell.anticipate-bonus::before { content:""; position:absolute; left:14px; top:14px; width:72px; height:72px; border-radius:50%; pointer-events:none; filter:blur(2px); }
+  .cell.anticipate-fs::before, .cell.anticipate-bonus::before { content:""; position:absolute; left:14%; top:14%; width:72%; height:72%; border-radius:50%; pointer-events:none; filter:blur(2px); }
   .cell.anticipate-fs::before { box-shadow:
     0 0 24px 10px rgba(0,255,140,0.8),
     0 0 48px 22px rgba(0,255,160,0.55),
@@ -331,10 +332,11 @@ function ensureReelTracks(){
     const track = document.createElement('div');
     track.id='reelTrack_'+c;
     track.style.position='absolute';
-    track.style.left=(c*(100+6))+'px';
+    // Use percentage positioning: each reel is 18.87% wide with 1.13% gap (6px/530px)
+    track.style.left=(c*20)+'%'; // 18.87% + 1.13% ≈ 20%
     track.style.top='0';
-    track.style.width='100px';
-  track.style.height='300px';
+    track.style.width='18.87%';
+    track.style.height='100%';
     track.style.overflow='hidden';
     track.style.pointerEvents='none';
     const inner=document.createElement('div');
@@ -348,7 +350,8 @@ function ensureReelTracks(){
     const loop=stripSymbols.concat(stripSymbols.slice(0,6));
     loop.forEach(sym=>{
       const holder=document.createElement('div');
-      holder.style.width='100px'; holder.style.height='100px';
+      holder.style.width='100%'; 
+      holder.style.aspectRatio='1';
       holder.style.display='flex'; holder.style.alignItems='center'; holder.style.justifyContent='center';
       const img=document.createElement('img'); img.className='symbol-img'; img.src=symbolImage[sym]; img.alt=sym; holder.appendChild(img);
       inner.appendChild(holder);
@@ -372,22 +375,30 @@ function beginReelCycle(reelIndex, startIndex){
   const strip = reels[reelIndex];
   const track = document.getElementById('reelTrack_'+reelIndex)?.querySelector('.stripInner');
   if(!track) return { decelerate(){}};
+  // Get actual cell height dynamically (since it scales with container)
+  const getCellHeight = () => {
+    const slotEl = document.getElementById('slot');
+    return slotEl ? slotEl.offsetWidth * 0.1887 : 100; // 18.87% of slot width
+  };
+  const cellHeight = getCellHeight();
   // Start at the same random index chosen when generating the logical result so alignment is faithful.
   let index = startIndex;
-  let speed = 2400; // px per second initial velocity (faster burst)
+  let speed = cellHeight * 24; // Scale speed with cell size (was 2400 for 100px cells)
   let spinningActive = true;
-  let pos = -index*100; // translateY (negative means top-of-strip at view)
+  let pos = -index*cellHeight; // translateY (negative means top-of-strip at view)
   const loopLen = strip.length + 6; // we duplicated 6
   const animate = (lastTs)=>{
     if(!spinningActive) return;
     requestAnimationFrame((ts)=>{
       const dt = (ts - lastTs)/1000; // seconds
       pos += speed*dt; 
-      const totalHeight = loopLen*100;
+      const totalHeight = loopLen*cellHeight;
       if(pos > 0){ pos -= totalHeight; }
       track.style.transform=`translateY(${pos}px)`;
-      // Add mid-deceleration blur reduction hook (simple heuristic on speed)
-  if(speed < 1600 && speed > 600) { track.classList.add('midDecel'); }
+      // Add mid-deceleration blur reduction hook (scaled with cell size)
+      const midSpeed = cellHeight * 16; // was 1600 for 100px
+      const slowSpeed = cellHeight * 6; // was 600 for 100px
+      if(speed < midSpeed && speed > slowSpeed) { track.classList.add('midDecel'); }
       animate(ts);
     });
   };
@@ -404,7 +415,7 @@ function beginReelCycle(reelIndex, startIndex){
           strip[(cand+2)%strip.length] === finalSymbols[2]
         ) { landingIndex = cand; break; }
       }
-      const targetPos = -landingIndex*100; // final alignment
+      const targetPos = -landingIndex*cellHeight; // final alignment
   // Deceleration profile: shorter duration for snappier slow-down, extend slightly if tease
   const duration = extraSlow? 1400 : 780; // ms
       const startPos = pos;
@@ -436,7 +447,7 @@ function beginReelCycle(reelIndex, startIndex){
           // Remove any inline filters from track images
           track.querySelectorAll('img').forEach(im=>{ im.style.filter=''; });
           // Determine actual visible top triple from final transform rather than trusting finalSymbols array for glow alignment.
-          const landingIndexFromTransform = Math.round(-targetPos/100) % strip.length;
+          const landingIndexFromTransform = Math.round(-targetPos/cellHeight) % strip.length;
           for(let row=0; row<3; row++){
             const actualSym = strip[(landingIndexFromTransform + row) % strip.length];
             const cell=document.querySelector(`.cell[data-pos='${reelIndex}-${row}']`);
