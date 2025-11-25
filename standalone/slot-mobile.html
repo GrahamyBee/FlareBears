@@ -11,7 +11,7 @@
   .stage { position:relative; }
   /* Mobile-optimized game board - maximize screen usage, move to top */
   #gameBoard { position:relative; width:100vw; aspect-ratio:3/2; background:url('/FlareBears/symbols/background.jpg') center/contain no-repeat; margin:0 auto; }
-  #slot { width:58%; height:auto; aspect-ratio:530/300; position:absolute; top:29%; left:20.5%; } /* Moved down another 2% from 27% to 29% */
+  #slot { width:58%; height:auto; aspect-ratio:530/300; position:absolute; top:31%; left:20.5%; } /* Moved down another 2% from 29% to 31% */
   
   /* Portrait: maximize width, stack controls below */
   @media (orientation: portrait) {
@@ -104,7 +104,7 @@
   .cell.reducingBlur img { transition:filter .35s ease; filter:blur(2px) brightness(.92) saturate(.95); }
   .cell.finalSharp img { filter:none; }
   .symbol-img { width:100%; height:100%; object-fit:contain; }
-  #lineOverlay { position:absolute; top:29%; left:20.5%; width:58%; height:auto; aspect-ratio:530/300; pointer-events:none; overflow:visible; z-index:20; } /* Moved down to 29% to match slot */
+  #lineOverlay { position:absolute; top:31%; left:20.5%; width:58%; height:auto; aspect-ratio:530/300; pointer-events:none; overflow:visible; z-index:20; } /* Moved down to 31% to match slot */
   #controls { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; justify-content:center; padding:0.5rem; width:100%; }
   button { background:#ff4fa3; color:#fff; border:none; padding:0.6rem 1rem; border-radius:6px; font-size:0.9rem; cursor:pointer; font-weight:600; touch-action:manipulation; -webkit-tap-highlight-color:transparent; white-space:nowrap; }
   button:active { transform:scale(0.95); }
