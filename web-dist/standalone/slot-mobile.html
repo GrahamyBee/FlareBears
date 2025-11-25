@@ -20,12 +20,19 @@
       width:100vw; 
       /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
       /* Then shift left to center: translate(-20.5% * 1.724) = -35.3% to align reel 1 with left edge */
-      /* Move down to show top of background */
-      transform:scale(1.724) translate(-20.5%, 15%);
+      /* Move up slightly to show title at top */
+      transform:scale(1.724) translate(-20.5%, 8%);
       transform-origin:left top;
-      margin-bottom:1rem; /* Space before controls */
+      margin-bottom:2rem; /* Space before controls - pushes them below background */
     }
-    #controls { width:100vw; margin:1rem 0; clear:both; }
+    #controls { 
+      width:100vw; 
+      margin:0.5rem 0; 
+      padding:1rem 0.5rem;
+      background:#1a1a1a; /* Dark background for visibility */
+      position:relative;
+      z-index:10;
+    }
   }
   
   /* Landscape: scale to fit height with controls above visible line */
