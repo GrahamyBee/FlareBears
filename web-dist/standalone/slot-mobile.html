@@ -1026,18 +1026,21 @@ function updateGlows() {
   // Clear existing glows
   glowOverlay.innerHTML = '';
   
-  // Both #slot and #glowOverlay are positioned identically within #gameBoard
-  // So we can use the cell's position relative to #slot directly
-  const slotWidth = slot.offsetWidth;
-  const slotHeight = slot.offsetHeight;
+  // Get actual rendered dimensions
+  const slotRect = slot.getBoundingClientRect();
+  const overlayRect = glowOverlay.getBoundingClientRect();
   
   // Find all cells with anticipation classes
   document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach(cell => {
-    // Get cell position relative to its positioned parent (#slot)
-    const cellLeft = cell.offsetLeft;
-    const cellTop = cell.offsetTop;
-    const cellWidth = cell.offsetWidth;
-    const cellHeight = cell.offsetHeight;
+    // Get actual rendered position of the cell
+    const cellRect = cell.getBoundingClientRect();
+    
+    // Calculate position relative to the overlay's coordinate space
+    // Since both slot and overlay have same positioning, we calculate offset from overlay
+    const cellLeftInOverlay = cellRect.left - overlayRect.left;
+    const cellTopInOverlay = cellRect.top - overlayRect.top;
+    const cellWidth = cellRect.width;
+    const cellHeight = cellRect.height;
     
     // Create glow element
     const glow = document.createElement('div');
@@ -1052,13 +1055,18 @@ function updateGlows() {
     
     // Position glow to match cell exactly (with 72% sizing and centered)
     const glowSize = cellWidth * 0.72;
-    const glowLeft = cellLeft + (cellWidth - glowSize) / 2;
-    const glowTop = cellTop + (cellHeight - glowSize) / 2;
+    const glowLeft = cellLeftInOverlay + (cellWidth - glowSize) / 2;
+    const glowTop = cellTopInOverlay + (cellHeight - glowSize) / 2;
     
-    glow.style.left = `${glowLeft}px`;
-    glow.style.top = `${glowTop}px`;
-    glow.style.width = `${glowSize}px`;
-    glow.style.height = `${glowSize}px`;
+    // Use percentages for better scaling
+    const glowLeftPct = (glowLeft / overlayRect.width) * 100;
+    const glowTopPct = (glowTop / overlayRect.height) * 100;
+    const glowSizePct = (glowSize / overlayRect.width) * 100;
+    
+    glow.style.left = `${glowLeftPct}%`;
+    glow.style.top = `${glowTopPct}%`;
+    glow.style.width = `${glowSizePct}%`;
+    glow.style.height = `${glowSizePct}%`;
     
     glowOverlay.appendChild(glow);
   });
