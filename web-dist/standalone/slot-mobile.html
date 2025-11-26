@@ -15,20 +15,18 @@
   
   /* Portrait: zoom in so reels fill full width (reel 1-5 edge to edge) */
   @media (orientation: portrait) {
-    body { justify-content:flex-start; align-items:flex-start; overflow-x:hidden; }
+    body { justify-content:flex-start; align-items:center; overflow-x:hidden; }
     #gameBoard { 
-      width:100vw; 
-      /* Reels: 58% wide at 20.5% left. Center of reels = 20.5 + 29 = 49.5% */
-      /* Scale by 1.76x. After scaling: 58% × 1.76 = 102% (fills width) */
-      /* To center: need reel center at 50vw. Reel center is at 49.5% of board. */
-      /* At 1.76 scale from left origin: 49.5% × 100vw × 1.76 = 87.12vw */
-      /* Shift left by (87.12 - 50) = 37.12vw to center */
-      /* In percentage of original board: 37.12vw / 100vw = -37.12% but after scale it's -37.12% / 1.76 = -21.09% */
-      transform:scale(1.76) translate(-21.09%, 8%);
-      transform-origin:left top;
-      margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
+      width:100vw;
+      /* Simple approach: Scale from center and adjust positioning */
+      /* Reels are 58% wide starting at 20.5% = center at 49.5% (slightly left of 50%) */
+      /* Scale 1.72x to make 58% fill ~100vw (58 * 1.72 = 99.76%) */
+      transform:scale(1.72);
+      transform-origin:49.5% 0; /* Scale from reel center point horizontally, top vertically */
+      margin-top:5vh; /* Add some top spacing */
+      margin-bottom:15vh; /* Large space - pushes controls down below background */
     }
-    /* LineOverlay is inside gameBoard, inherits transform automatically */
+    /* Slot and lineOverlay are inside gameBoard - they inherit the transform */
     #controls { 
       width:100%; 
       max-width:100vw;
