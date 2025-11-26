@@ -19,10 +19,10 @@
     #gameBoard { 
       width:100vw; 
       /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
-      /* Then shift left to center: translate(-20.5% * 1.724) = -35.3% to align reel 1 with left edge */
-      /* Move up slightly to show title at top */
-      transform:scale(1.724) translate(-20.5%, 8%);
-      transform-origin:left top;
+      /* Increase zoom slightly for better fit: 1.76 instead of 1.724 */
+      /* Center horizontally: translate(-21%, 8%) for perfect centering */
+      transform:scale(1.76) translate(-21%, 8%);
+      transform-origin:center top;
       margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
     }
     #controls { 
