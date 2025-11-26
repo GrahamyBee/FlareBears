@@ -15,20 +15,26 @@
   
   /* Portrait: zoom in so reels fill full width (reel 1-5 edge to edge) */
   @media (orientation: portrait) {
-    body { justify-content:flex-start; align-items:center; overflow-x:hidden; }
+    body { 
+      justify-content:flex-start; 
+      align-items:center; 
+      overflow-x:hidden; 
+    }
     #gameBoard { 
       width:100vw;
-      /* Reels are 58% wide starting at 20.5% left = center at 49.5% */
-      /* To center reels in viewport: move board left by 0.5vw (since 49.5% vs 50%) */
-      /* Then scale 1.72x to make 58% fill ~100vw (58 * 1.72 = 99.76%) */
-      /* But scaling from 49.5% origin means board expands unevenly - left side grows less */
-      /* So we need to shift the board slightly right before transform */
-      position:relative;
-      left:0.5vw; /* Shift right by the small offset */
+      /* Center the board and its contents */
+      /* Reels span 58% starting at 20.5%, center at 49.5% */
+      /* Scale 1.72x from center to fill width */
       transform:scale(1.72);
-      transform-origin:50% 0; /* Scale from true center */
-      margin-top:5vh; /* Add some top spacing */
-      margin-bottom:15vh; /* Large space - pushes controls down below background */
+      transform-origin:center top; /* Scale from center horizontally, top vertically */
+      margin-top:5vh;
+      margin-bottom:15vh;
+      /* Force centering */
+      margin-left:auto;
+      margin-right:auto;
+      left:50%;
+      position:relative;
+      transform:translateX(-50%) scale(1.72); /* Center first, then scale */
     }
     /* Slot and lineOverlay are inside gameBoard - they inherit the transform */
     #controls { 
