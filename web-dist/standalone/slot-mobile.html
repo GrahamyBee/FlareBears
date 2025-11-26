@@ -1236,6 +1236,8 @@ async function spin(forceBonus=false){
         const cell=document.querySelector(`.cell[data-pos='${reel}-${rIndex}']`);
         if(cell && cell.dataset.sym===teaseTargetType){ cell.classList.add(teaseTargetClass,'pulse'); }
       }
+      // Update glows for newly landed symbols
+      updateGlows();
     }
     if(!teaseActivated && reel < result.grid.length-1){
       let countFS=0, countBonus=0;
@@ -1260,6 +1262,8 @@ async function spin(forceBonus=false){
             }
           }
         }
+        // Update glows immediately when tease is triggered
+        updateGlows();
         // Initial dramatic pause before remaining reels
         await new Promise(r=>setTimeout(r, TEASE_EXTRA_DELAY_FIRST));
         // Play subtle tease sound
