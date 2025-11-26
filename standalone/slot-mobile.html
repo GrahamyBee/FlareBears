@@ -89,12 +89,16 @@
   
   /* ===== PORTRAIT MODE (MOBILE) ===== */
   @media (orientation: portrait) {
+    body {
+      padding-top: 0; /* Ensure no top padding */
+    }
+    
     #gameBoard { 
       /* Scale up to fill width: 58% × 1.78 = 103.24% */
       transform: scale(1.78);
       transform-origin: center top;
-      margin-top: 0; /* Remove top margin - start at top of page */
-      margin-bottom: 10vh; /* Reduced from 15vh */
+      margin-top: 0; /* Start at top of page */
+      margin-bottom: 5vh; /* Space between game and controls */
       /* Clear conflicting properties from base styles */
       position: static;
       margin-left: 0;
@@ -104,11 +108,10 @@
     #controls { 
       width: 100%; 
       max-width: 100vw;
-      margin: 0.5rem 0; 
+      margin: 2rem 0; /* Add top margin to push below background */
       padding: 1rem 0.5rem;
       background: #1a1a1a;
       position: relative;
-      top: 0; /* Remove top offset - keep controls close to game */
       z-index: 10;
       text-align: center;
     }
