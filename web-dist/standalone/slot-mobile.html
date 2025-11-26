@@ -87,6 +87,35 @@
     z-index: 20; 
   }
   
+  /* Glow overlay for anticipation effects */
+  #glowOverlay {
+    position: absolute;
+    top: 28%;
+    left: 20.5%;
+    width: 58%;
+    height: auto;
+    aspect-ratio: 530/300;
+    pointer-events: none;
+    z-index: 15;
+  }
+  
+  .cell-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(2px);
+  }
+  
+  .cell-glow.fs {
+    box-shadow: 0 0 24px 10px rgba(0,255,140,0.8), 0 0 48px 22px rgba(0,255,160,0.55), inset 0 0 16px rgba(0,255,150,0.7);
+    animation: neonPulse 1.3s ease-in-out infinite;
+  }
+  
+  .cell-glow.bonus {
+    box-shadow: 0 0 24px 10px rgba(255,150,40,0.85), 0 0 48px 22px rgba(255,130,20,0.55), inset 0 0 16px rgba(255,170,60,0.75);
+    animation: neonPulse 1.3s ease-in-out infinite;
+  }
+  
   /* ===== PORTRAIT MODE (MOBILE) ===== */
   @media (orientation: portrait) {
     body {
@@ -429,39 +458,11 @@
     animation: none; 
   }
   
-  .cell.anticipate-fs::before, 
-  .cell.anticipate-bonus::before { 
-    content: ""; 
-    position: absolute; 
-    left: 50%; 
-    top: 50%; 
-    transform: translate(-50%, -50%); 
-    width: 72%; 
-    height: 72%; 
-    border-radius: 50%; 
-    pointer-events: none; 
-    filter: blur(2px); 
-  }
-  
-  .cell.anticipate-fs::before { 
-    box-shadow: 0 0 24px 10px rgba(0,255,140,0.8), 0 0 48px 22px rgba(0,255,160,0.55), inset 0 0 16px rgba(0,255,150,0.7); 
-    animation: neonPulse 1.3s ease-in-out infinite; 
-  }
-  
-  .cell.anticipate-bonus::before { 
-    box-shadow: 0 0 24px 10px rgba(255,150,40,0.85), 0 0 48px 22px rgba(255,130,20,0.55), inset 0 0 16px rgba(255,170,60,0.75); 
-    animation: neonPulse 1.3s ease-in-out infinite; 
-  }
-  
-  .cell.anticipate-fs::after, 
-  .cell.anticipate-bonus::after { 
-    display: none; 
-  }
-  
+  /* Cell pulse animation for anticipation (glow is now in overlay) */
   .cell.anticipate.pulse,
   .cell.anticipate-fs.pulse,
   .cell.anticipate-bonus.pulse { 
-    animation: pulseGlow 1.25s ease-in-out infinite, pulseScale 1.6s ease-in-out infinite; 
+    animation: pulseScale 1.6s ease-in-out infinite; 
   }
   
   .cell.spinning { 
@@ -606,6 +607,7 @@
 <div id="gameBoard">
   <div id="slot"><div id="reelBack"></div></div>
   <svg id="lineOverlay"></svg>
+  <div id="glowOverlay"></div>
   <!-- Bonus Round Full Overlay (covers entire game board) -->
   <div id="bonusRoundOverlay">
     <div id="bonusRoundInner">
@@ -1016,6 +1018,55 @@ function drawLines(lineWins){
   winLinesTimeout = setTimeout(()=> clearWinLines(),5000);
 }
 
+function updateGlows() {
+  const glowOverlay = document.getElementById('glowOverlay');
+  if (!glowOverlay) return;
+  
+  // Clear existing glows
+  glowOverlay.innerHTML = '';
+  
+  // Get the slot container's bounding box (relative to glowOverlay parent)
+  const slot = document.getElementById('slot');
+  if (!slot) return;
+  
+  const slotRect = slot.getBoundingClientRect();
+  const overlayRect = glowOverlay.getBoundingClientRect();
+  
+  // Find all cells with anticipation classes
+  document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach(cell => {
+    const cellRect = cell.getBoundingClientRect();
+    
+    // Calculate position relative to the glow overlay
+    const left = cellRect.left - overlayRect.left;
+    const top = cellRect.top - overlayRect.top;
+    const width = cellRect.width;
+    const height = cellRect.height;
+    
+    // Create glow element
+    const glow = document.createElement('div');
+    glow.className = 'cell-glow';
+    
+    // Add specific glow type
+    if (cell.classList.contains('anticipate-fs')) {
+      glow.classList.add('fs');
+    } else if (cell.classList.contains('anticipate-bonus')) {
+      glow.classList.add('bonus');
+    }
+    
+    // Position glow to match cell exactly (with 72% sizing and centered)
+    const glowSize = width * 0.72;
+    const glowLeft = left + (width - glowSize) / 2;
+    const glowTop = top + (height - glowSize) / 2;
+    
+    glow.style.left = `${glowLeft}px`;
+    glow.style.top = `${glowTop}px`;
+    glow.style.width = `${glowSize}px`;
+    glow.style.height = `${glowSize}px`;
+    
+    glowOverlay.appendChild(glow);
+  });
+}
+
 function log(msg){ const el=document.getElementById('log'); const line=document.createElement('div'); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; el.prepend(line); }
 function updateStats(){ document.getElementById('balance').textContent=balance.toFixed(2); document.getElementById('spins').textContent=spins.toString(); document.getElementById('rtp').textContent=(totalWin/(totalBet||1)*100).toFixed(2)+'%'; const net = totalWin - totalBet; const netEl=document.getElementById('sessionNet'); if(netEl){ netEl.textContent = (net>=0?'+':'')+net.toFixed(2); netEl.style.color = net>=0 ? '#39ff14' : '#ff4fa3'; } }
 function setButtons(disabled){ document.getElementById('spinBtn').disabled=disabled; document.getElementById('autoBtn').disabled=disabled; }
@@ -1261,7 +1312,9 @@ async function spin(forceBonus=false){
     else if (bonusTotal >=2 && sym==='S13') { cell.classList.add('anticipate-bonus','pulse'); }
     else { cell.classList.remove('anticipate-fs','anticipate-bonus','pulse'); }
   });
-  drawLines(result.lineWins); updateStats(); spinning=false; setButtons(false);
+  drawLines(result.lineWins); 
+  updateGlows(); // Update glow positions based on exact cell locations
+  updateStats(); spinning=false; setButtons(false);
   // Launch bonus pick after 3s delay if triggered
   if (bonusCount>0){
     log(`Bonus Pick Triggered: ${bonusCount} picks available (showing in 2s...)`);
@@ -1393,6 +1446,13 @@ logPaytable();
   baseReelMs.value='280'; staggerMs.value='120'; teaseFirstMs.value='900'; teasePerMs.value='450'; updateTimingDisplay();
  });
  updateTimingDisplay();
+
+ // Update glows on window resize/orientation change
+ window.addEventListener('resize', () => {
+   // Debounce to avoid excessive updates
+   clearTimeout(window.glowResizeTimeout);
+   window.glowResizeTimeout = setTimeout(updateGlows, 100);
+ });
 
  // --- Bulk Simulation Logic ---
  let simRunning = false;
