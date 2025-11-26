@@ -1030,10 +1030,21 @@ function updateGlows() {
   const slotRect = slot.getBoundingClientRect();
   const overlayRect = glowOverlay.getBoundingClientRect();
   
+  console.log('=== Glow Update Debug ===');
+  console.log('Slot rect:', slotRect);
+  console.log('Overlay rect:', overlayRect);
+  console.log('Slot and overlay same position?', slotRect.left === overlayRect.left, slotRect.top === overlayRect.top);
+  
   // Find all cells with anticipation classes
-  document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach(cell => {
+  document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach((cell, index) => {
     // Get actual rendered position of the cell
     const cellRect = cell.getBoundingClientRect();
+    
+    console.log(`Cell ${index}:`, {
+      cellRect,
+      symbol: cell.dataset.sym,
+      classes: cell.className
+    });
     
     // Calculate position relative to the overlay's coordinate space
     // Since both slot and overlay have same positioning, we calculate offset from overlay
@@ -1041,6 +1052,8 @@ function updateGlows() {
     const cellTopInOverlay = cellRect.top - overlayRect.top;
     const cellWidth = cellRect.width;
     const cellHeight = cellRect.height;
+    
+    console.log(`  Position in overlay: left=${cellLeftInOverlay}px, top=${cellTopInOverlay}px, size=${cellWidth}x${cellHeight}px`);
     
     // Create glow element
     const glow = document.createElement('div');
@@ -1062,6 +1075,8 @@ function updateGlows() {
     const glowLeftPct = (glowLeft / overlayRect.width) * 100;
     const glowTopPct = (glowTop / overlayRect.height) * 100;
     const glowSizePct = (glowSize / overlayRect.width) * 100;
+    
+    console.log(`  Glow: ${glowLeftPct.toFixed(2)}%, ${glowTopPct.toFixed(2)}%, size=${glowSizePct.toFixed(2)}%`);
     
     glow.style.left = `${glowLeftPct}%`;
     glow.style.top = `${glowTopPct}%`;
