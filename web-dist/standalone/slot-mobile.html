@@ -18,11 +18,15 @@
     body { justify-content:flex-start; align-items:center; overflow-x:hidden; }
     #gameBoard { 
       width:100vw;
-      /* Simple approach: Scale from center and adjust positioning */
-      /* Reels are 58% wide starting at 20.5% = center at 49.5% (slightly left of 50%) */
-      /* Scale 1.72x to make 58% fill ~100vw (58 * 1.72 = 99.76%) */
+      /* Reels are 58% wide starting at 20.5% left = center at 49.5% */
+      /* To center reels in viewport: move board left by 0.5vw (since 49.5% vs 50%) */
+      /* Then scale 1.72x to make 58% fill ~100vw (58 * 1.72 = 99.76%) */
+      /* But scaling from 49.5% origin means board expands unevenly - left side grows less */
+      /* So we need to shift the board slightly right before transform */
+      position:relative;
+      left:0.5vw; /* Shift right by the small offset */
       transform:scale(1.72);
-      transform-origin:49.5% 0; /* Scale from reel center point horizontally, top vertically */
+      transform-origin:50% 0; /* Scale from true center */
       margin-top:5vh; /* Add some top spacing */
       margin-bottom:15vh; /* Large space - pushes controls down below background */
     }
