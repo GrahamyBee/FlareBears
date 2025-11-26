@@ -607,7 +607,6 @@
 <div id="gameBoard">
   <div id="slot"><div id="reelBack"></div></div>
   <svg id="lineOverlay"></svg>
-  <div id="glowOverlay"></div>
   <!-- Bonus Round Full Overlay (covers entire game board) -->
   <div id="bonusRoundOverlay">
     <div id="bonusRoundInner">
@@ -1019,45 +1018,14 @@ function drawLines(lineWins){
 }
 
 function updateGlows() {
-  const glowOverlay = document.getElementById('glowOverlay');
-  const slot = document.getElementById('slot');
-  if (!glowOverlay || !slot) return;
+  // Remove any existing glows from previous spins
+  document.querySelectorAll('.cell-glow-inner').forEach(g => g.remove());
   
-  // Clear existing glows
-  glowOverlay.innerHTML = '';
-  
-  // Get actual rendered dimensions
-  const slotRect = slot.getBoundingClientRect();
-  const overlayRect = glowOverlay.getBoundingClientRect();
-  
-  console.log('=== Glow Update Debug ===');
-  console.log('Slot rect:', slotRect);
-  console.log('Overlay rect:', overlayRect);
-  console.log('Slot and overlay same position?', slotRect.left === overlayRect.left, slotRect.top === overlayRect.top);
-  
-  // Find all cells with anticipation classes
-  document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach((cell, index) => {
-    // Get actual rendered position of the cell
-    const cellRect = cell.getBoundingClientRect();
-    
-    console.log(`Cell ${index}:`, {
-      cellRect,
-      symbol: cell.dataset.sym,
-      classes: cell.className
-    });
-    
-    // Calculate position relative to the overlay's coordinate space
-    // Since both slot and overlay have same positioning, we calculate offset from overlay
-    const cellLeftInOverlay = cellRect.left - overlayRect.left;
-    const cellTopInOverlay = cellRect.top - overlayRect.top;
-    const cellWidth = cellRect.width;
-    const cellHeight = cellRect.height;
-    
-    console.log(`  Position in overlay: left=${cellLeftInOverlay}px, top=${cellTopInOverlay}px, size=${cellWidth}x${cellHeight}px`);
-    
-    // Create glow element
+  // Find all cells with anticipation classes and add glows directly inside them
+  document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach(cell => {
+    // Create glow element as a child of the cell
     const glow = document.createElement('div');
-    glow.className = 'cell-glow';
+    glow.className = 'cell-glow-inner';
     
     // Add specific glow type
     if (cell.classList.contains('anticipate-fs')) {
@@ -1066,24 +1034,28 @@ function updateGlows() {
       glow.classList.add('bonus');
     }
     
-    // Position glow to match cell exactly (with 72% sizing and centered)
-    const glowSize = cellWidth * 0.72;
-    const glowLeft = cellLeftInOverlay + (cellWidth - glowSize) / 2;
-    const glowTop = cellTopInOverlay + (cellHeight - glowSize) / 2;
+    // Glow is positioned absolutely within the cell, centered at 72% size
+    glow.style.position = 'absolute';
+    glow.style.left = '50%';
+    glow.style.top = '50%';
+    glow.style.transform = 'translate(-50%, -50%)';
+    glow.style.width = '72%';
+    glow.style.height = '72%';
+    glow.style.borderRadius = '50%';
+    glow.style.pointerEvents = 'none';
+    glow.style.filter = 'blur(2px)';
     
-    // Use percentages for better scaling
-    const glowLeftPct = (glowLeft / overlayRect.width) * 100;
-    const glowTopPct = (glowTop / overlayRect.height) * 100;
-    const glowSizePct = (glowSize / overlayRect.width) * 100;
+    // Apply glow-specific box-shadow
+    if (glow.classList.contains('fs')) {
+      glow.style.boxShadow = '0 0 24px 10px rgba(0,255,140,0.8), 0 0 48px 22px rgba(0,255,160,0.55), inset 0 0 16px rgba(0,255,150,0.7)';
+      glow.style.animation = 'neonPulse 1.3s ease-in-out infinite';
+    } else if (glow.classList.contains('bonus')) {
+      glow.style.boxShadow = '0 0 24px 10px rgba(255,150,40,0.85), 0 0 48px 22px rgba(255,130,20,0.55), inset 0 0 16px rgba(255,170,60,0.75)';
+      glow.style.animation = 'neonPulse 1.3s ease-in-out infinite';
+    }
     
-    console.log(`  Glow: ${glowLeftPct.toFixed(2)}%, ${glowTopPct.toFixed(2)}%, size=${glowSizePct.toFixed(2)}%`);
-    
-    glow.style.left = `${glowLeftPct}%`;
-    glow.style.top = `${glowTopPct}%`;
-    glow.style.width = `${glowSizePct}%`;
-    glow.style.height = `${glowSizePct}%`;
-    
-    glowOverlay.appendChild(glow);
+    // Append glow as first child so it appears behind the symbol image
+    cell.insertBefore(glow, cell.firstChild);
   });
 }
 
