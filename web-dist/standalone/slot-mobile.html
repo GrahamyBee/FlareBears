@@ -906,14 +906,25 @@ function beginReelCycle(reelIndex, startIndex){
 }
 function drawLines(lineWins){
   const overlay=document.getElementById('lineOverlay'); if(!overlay) return; overlay.innerHTML='';
+  
+  // Set viewBox to match slot dimensions (530x300)
+  overlay.setAttribute('viewBox', '0 0 530 300');
+  overlay.setAttribute('preserveAspectRatio', 'none');
+  
   const colors=['#ffeb3b','#39ff14','#ff4fa3','#2196f3','#ff9800','#e91e63','#00bcd4','#ffc107'];
+  
+  // Cell dimensions in viewBox coordinates: 100px cells with 6px spacing
+  const cellWidth = 100;
+  const cellSpacing = 6;
+  
   lineWins.forEach((w,i)=>{
     const pattern=lines[w.lineIndex];
     const pts=[];
     for(let reel=0; reel<w.count; reel++){
       const row=pattern[reel];
-      const x = reel*100 + reel*6 + 50; // keep horizontal spacing
-      const y = row*100 + 50; // removed vertical 6px gaps
+      // Center of each cell in viewBox coordinates
+      const x = reel * (cellWidth + cellSpacing) + cellWidth / 2;
+      const y = row * cellWidth + cellWidth / 2;
       pts.push(`${x},${y}`);
     }
     const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
