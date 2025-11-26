@@ -562,11 +562,26 @@
   /* ===== HIDE DEBUG ELEMENTS ===== */
   #log, 
   #timingControls, 
-  #forceFSBtn, 
-  #forceBonusBtn, 
   #simBtn, 
   .stat-bar { 
     display: none !important; 
+  }
+  
+  /* Force buttons container - shown below main controls */
+  #forceButtonsContainer {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  #forceFSBtn,
+  #forceBonusBtn {
+    flex: 1;
+    max-width: 200px;
+    font-size: 0.9rem;
   }
   
   /* Hide Log title (h3 element before #log) */
@@ -608,13 +623,15 @@
   <label>Bet/Line <input id="bet" type="number" value="0.04" step="0.01" style="width:70px" disabled title="Fixed £1 total stake (25 lines × £0.04)"></label>
   <button id="spinBtn">Spin</button>
   <button id="autoBtn">Auto (50)</button>
-  <button id="forceFSBtn">Force FS</button>
-  <button id="forceBonusBtn">Force Bonus</button>
   <button id="simBtn" style="background:#2196f3;">Sim 10k</button>
   <div>Total Win: <strong id="lastWin">0</strong></div>
   <audio id="teaseSound" preload="auto">
     <source src="../public/sounds/tease.mp3" type="audio/mpeg" />
   </audio>
+</div>
+<div id="forceButtonsContainer">
+  <button id="forceFSBtn">Force FS</button>
+  <button id="forceBonusBtn">Force Bonus</button>
 </div>
 <div id="timingControls" style="display:flex; flex-wrap:wrap; gap:1rem; padding:.5rem 1rem; background:#1c1c1c; border-radius:8px; margin:.5rem 0;">
   <label style="display:flex; flex-direction:column; font-size:.7rem;">Base Reel<br><input id="baseReelMs" type="range" min="150" max="600" value="280" step="10"><span id="baseReelMsVal">280ms</span></label>
