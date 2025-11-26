@@ -20,9 +20,11 @@
       width:100vw; 
       /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
       /* Increase zoom slightly for better fit: 1.76 instead of 1.724 */
-      /* Center horizontally: translate(-21%, 8%) for perfect centering */
-      transform:scale(1.76) translate(-21%, 8%);
-      transform-origin:center top;
+      /* Center: reels start at 20.5%, so translate by -(20.5 + (58/2 - 50)) = -(20.5 + (29-50)) = -(20.5 - 21) = -(-0.5) but need to account for scale */
+      /* At 1.76x scale, 58% becomes 102% of viewport. Center point of reels is at 20.5% + 29% = 49.5% before scale */
+      /* After scale from left, need to shift back: translate X by about -11.5% to center */
+      transform:scale(1.76) translate(-11.5%, 8%);
+      transform-origin:left top;
       margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
     }
     #controls { 
