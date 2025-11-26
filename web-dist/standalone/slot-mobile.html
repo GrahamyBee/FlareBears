@@ -116,6 +116,32 @@
       z-index: 10;
       text-align: center;
     }
+    
+    /* Bonus round optimized for portrait */
+    #bonusRoundInner {
+      padding: 2rem 1rem;
+    }
+    
+    #bonusHeader {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    #bonusSub {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    #bonusPicksGrid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+    
+    .pickCell {
+      max-width: none;
+    }
   }
   
   /* ===== LANDSCAPE MODE (MOBILE) ===== */
@@ -144,6 +170,36 @@
     
     #controls label { 
       font-size: 0.75rem; 
+    }
+    
+    /* Bonus round optimized for landscape */
+    #bonusRoundInner {
+      padding: 1rem;
+      justify-content: center;
+    }
+    
+    #bonusHeader {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    #bonusSub {
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    
+    #bonusPicksGrid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      max-width: 90vw;
+    }
+    
+    .pickCell {
+      max-width: 120px;
+    }
+    
+    #bonusControls {
+      margin-top: 1rem;
     }
   }
   
@@ -377,8 +433,9 @@
   .cell.anticipate-bonus::before { 
     content: ""; 
     position: absolute; 
-    left: 14%; 
-    top: 14%; 
+    left: 50%; 
+    top: 50%; 
+    transform: translate(-50%, -50%); 
     width: 72%; 
     height: 72%; 
     border-radius: 50%; 
