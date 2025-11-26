@@ -1020,27 +1020,24 @@ function drawLines(lineWins){
 
 function updateGlows() {
   const glowOverlay = document.getElementById('glowOverlay');
-  if (!glowOverlay) return;
+  const slot = document.getElementById('slot');
+  if (!glowOverlay || !slot) return;
   
   // Clear existing glows
   glowOverlay.innerHTML = '';
   
-  // Get the slot container's bounding box (relative to glowOverlay parent)
-  const slot = document.getElementById('slot');
-  if (!slot) return;
-  
-  const slotRect = slot.getBoundingClientRect();
-  const overlayRect = glowOverlay.getBoundingClientRect();
+  // Both #slot and #glowOverlay are positioned identically within #gameBoard
+  // So we can use the cell's position relative to #slot directly
+  const slotWidth = slot.offsetWidth;
+  const slotHeight = slot.offsetHeight;
   
   // Find all cells with anticipation classes
   document.querySelectorAll('.cell.anticipate-fs, .cell.anticipate-bonus').forEach(cell => {
-    const cellRect = cell.getBoundingClientRect();
-    
-    // Calculate position relative to the glow overlay
-    const left = cellRect.left - overlayRect.left;
-    const top = cellRect.top - overlayRect.top;
-    const width = cellRect.width;
-    const height = cellRect.height;
+    // Get cell position relative to its positioned parent (#slot)
+    const cellLeft = cell.offsetLeft;
+    const cellTop = cell.offsetTop;
+    const cellWidth = cell.offsetWidth;
+    const cellHeight = cell.offsetHeight;
     
     // Create glow element
     const glow = document.createElement('div');
@@ -1054,9 +1051,9 @@ function updateGlows() {
     }
     
     // Position glow to match cell exactly (with 72% sizing and centered)
-    const glowSize = width * 0.72;
-    const glowLeft = left + (width - glowSize) / 2;
-    const glowTop = top + (height - glowSize) / 2;
+    const glowSize = cellWidth * 0.72;
+    const glowLeft = cellLeft + (cellWidth - glowSize) / 2;
+    const glowTop = cellTop + (cellHeight - glowSize) / 2;
     
     glow.style.left = `${glowLeft}px`;
     glow.style.top = `${glowTop}px`;
