@@ -15,29 +15,25 @@
   
   /* Portrait: zoom in so reels fill full width (reel 1-5 edge to edge) */
   @media (orientation: portrait) {
-    body { justify-content:flex-start; }
+    body { justify-content:flex-start; align-items:center; }
     #gameBoard { 
       width:100vw; 
       /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
       /* Increase zoom slightly for better fit: 1.76 instead of 1.724 */
-      /* Center: reels start at 20.5%, so translate by -(20.5 + (58/2 - 50)) = -(20.5 + (29-50)) = -(20.5 - 21) = -(-0.5) but need to account for scale */
-      /* At 1.76x scale, 58% becomes 102% of viewport. Center point of reels is at 20.5% + 29% = 49.5% before scale */
-      /* After scale from left, need to shift back: translate X by about -11.5% to center */
-      transform:scale(1.76) translate(-11.5%, 8%);
-      transform-origin:left top;
+      /* Scale and translate vertically, center horizontally via body alignment */
+      transform:scale(1.76) translateY(8%);
+      transform-origin:center top;
       margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
     }
     #controls { 
-      width:100vw; 
+      width:100%; 
+      max-width:100vw;
       margin:0.5rem 0; 
       padding:1rem 0.5rem;
       background:#1a1a1a; /* Dark background for visibility */
       position:relative;
       top:10vh; /* Move controls container down by 10% */
       z-index:10;
-      /* Match horizontal alignment with gameBoard */
-      transform:translateX(-11.5%);
-      transform-origin:left top;
     }
   }
   
