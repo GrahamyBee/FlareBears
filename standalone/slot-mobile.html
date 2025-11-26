@@ -505,6 +505,21 @@
   .stat-bar { 
     display: none !important; 
   }
+  
+  /* Hide Log title (h3 element before #log) */
+  #log::before,
+  h3:has(+ #log) { 
+    display: none !important; 
+  }
+  
+  /* Alternative selector for browsers that don't support :has() */
+  h3 + #log { 
+    margin-top: 0 !important; 
+  }
+  
+  h3 { 
+    display: none !important; 
+  }
 </style>
 </head>
 <body>
