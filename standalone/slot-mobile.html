@@ -18,20 +18,15 @@
     body { justify-content:flex-start; align-items:center; }
     #gameBoard { 
       width:100vw; 
-      /* Reels span 58% of board at 20.5% left, so center of reels is at 20.5 + 29 = 49.5% */
-      /* To center reels in viewport, need to shift board left by 0.5% before scaling */
-      /* Then scale by 1.76x to make 58% width fill ~102% */
-      left:-0.5%; /* Shift to center reels before scaling */
+      /* Reels are at 20.5% left, 58% wide. Center is at 49.5%. Scale 1.76x to fill width. */
+      /* Use left margin to center: at scale 1.76, board becomes 176vw. */
+      /* Reels center (49.5%) of 176vw = 87.12vw. Need to shift left by 37.12vw = 21.09% of 176vw */
+      margin-left:-21vw; /* Shift left to center reels after scaling */
       transform:scale(1.76) translateY(8%);
-      transform-origin:center top;
+      transform-origin:left top;
       margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
     }
-    /* Match line overlay transformation with game board */
-    #lineOverlay {
-      left:-0.5%; /* Same left offset as gameBoard */
-      transform:scale(1.76) translateY(8%);
-      transform-origin:center top;
-    }
+    /* LineOverlay is inside gameBoard, so no additional transform needed - inherits parent transform */
     #controls { 
       width:100%; 
       max-width:100vw;
