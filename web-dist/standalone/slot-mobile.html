@@ -93,8 +93,8 @@
       /* Scale up to fill width: 58% × 1.78 = 103.24% */
       transform: scale(1.78);
       transform-origin: center top;
-      margin-top: 5vh;
-      margin-bottom: 15vh;
+      margin-top: 0; /* Remove top margin - start at top of page */
+      margin-bottom: 10vh; /* Reduced from 15vh */
       /* Clear conflicting properties from base styles */
       position: static;
       margin-left: 0;
@@ -108,7 +108,7 @@
       padding: 1rem 0.5rem;
       background: #1a1a1a;
       position: relative;
-      top: 5vh;
+      top: 0; /* Remove top offset - keep controls close to game */
       z-index: 10;
       text-align: center;
     }
