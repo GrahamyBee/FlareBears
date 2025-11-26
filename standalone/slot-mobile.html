@@ -18,9 +18,10 @@
     body { justify-content:flex-start; align-items:center; }
     #gameBoard { 
       width:100vw; 
-      /* Reels span 58% of board, positioned at 20.5% left. To fill 100%, need to zoom by 100/58 = 1.724 */
-      /* Increase zoom slightly for better fit: 1.76 instead of 1.724 */
-      /* Scale and translate vertically, center horizontally via body alignment */
+      /* Reels span 58% of board at 20.5% left, so center of reels is at 20.5 + 29 = 49.5% */
+      /* To center reels in viewport, need to shift board left by 0.5% before scaling */
+      /* Then scale by 1.76x to make 58% width fill ~102% */
+      left:-0.5%; /* Shift to center reels before scaling */
       transform:scale(1.76) translateY(8%);
       transform-origin:center top;
       margin-bottom:15vh; /* Large space - pushes controls down 10%+ below background */
@@ -34,6 +35,7 @@
       position:relative;
       top:10vh; /* Move controls container down by 10% */
       z-index:10;
+      text-align:center; /* Center button contents */
     }
   }
   
