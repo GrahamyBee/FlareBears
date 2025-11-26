@@ -24,8 +24,8 @@
       width:100vw;
       /* Center the board and its contents */
       /* Reels span 58% starting at 20.5%, center at 49.5% */
-      /* Scale 1.72x from center to fill width */
-      transform:scale(1.72);
+      /* Increase scale to 1.78x to better fill width */
+      transform:scale(1.78);
       transform-origin:center top; /* Scale from center horizontally, top vertically */
       margin-top:5vh;
       margin-bottom:15vh;
@@ -34,7 +34,7 @@
       margin-right:auto;
       left:50%;
       position:relative;
-      transform:translateX(-50%) scale(1.72); /* Center first, then scale */
+      transform:translateX(-50%) scale(1.78); /* Center first, then scale - increased from 1.72 to 1.78 */
     }
     /* Slot and lineOverlay are inside gameBoard - they inherit the transform */
     #controls { 
@@ -44,7 +44,7 @@
       padding:1rem 0.5rem;
       background:#1a1a1a; /* Dark background for visibility */
       position:relative;
-      top:10vh; /* Move controls container down by 10% */
+      top:5vh; /* Move controls container down by 5% (reduced from 10vh) */
       z-index:10;
       text-align:center; /* Center button contents */
     }
