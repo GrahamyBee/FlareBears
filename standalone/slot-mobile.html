@@ -119,28 +119,28 @@
     
     /* Bonus round optimized for portrait */
     #bonusRoundInner {
-      padding: 2rem 1rem;
+      padding: 2rem 1.5rem;
     }
     
     #bonusHeader {
-      font-size: 2rem;
-      margin-bottom: 1rem;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      margin-bottom: 0.5rem;
     }
     
     #bonusSub {
-      font-size: 1rem;
-      margin-bottom: 1.5rem;
+      font-size: clamp(0.9rem, 3vw, 1.2rem);
+      margin-bottom: 1rem;
     }
     
     #bonusPicksGrid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
-      max-width: 100%;
-      padding: 0 1rem;
+      gap: clamp(1rem, 3vw, 2rem);
+      max-width: 90vw;
+      width: 100%;
     }
     
     .pickCell {
-      max-width: none;
+      border-radius: 10px;
     }
   }
   
@@ -174,35 +174,34 @@
     
     /* Bonus round optimized for landscape */
     #bonusRoundInner {
-      padding: 1rem 2rem;
+      padding: clamp(0.5rem, 2vh, 1.5rem) clamp(1rem, 3vw, 3rem);
       justify-content: center;
       align-items: center;
     }
     
     #bonusHeader {
-      font-size: 1.6rem;
-      margin-bottom: 0.5rem;
+      font-size: clamp(1.2rem, 3vh, 2rem);
+      margin-bottom: 0.25rem;
     }
     
     #bonusSub {
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
+      font-size: clamp(0.7rem, 2vh, 1rem);
+      margin-bottom: clamp(0.5rem, 2vh, 1rem);
     }
     
     #bonusPicksGrid {
       grid-template-columns: repeat(6, 1fr);
-      gap: 1rem;
-      max-width: 95vw;
+      gap: clamp(0.5rem, 1.5vw, 1.5rem);
+      max-width: 90vw;
       width: 100%;
     }
     
     .pickCell {
-      max-width: 140px;
-      width: 100%;
+      border-radius: 8px;
     }
     
     #bonusControls {
-      margin-top: 1.5rem;
+      margin-top: clamp(0.5rem, 2vh, 1.5rem);
       display: flex;
       gap: 1rem;
       justify-content: center;
@@ -217,7 +216,9 @@
     height: 100vh; 
     display: none; 
     z-index: 9999; 
-    background: url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; 
+    background: url('/FlareBears/symbols/bonus background image.jpg') center center / cover no-repeat; 
+    background-size: cover;
+    background-position: center;
     box-shadow: 0 0 40px rgba(0,0,0,.6) inset; 
     overflow-y: auto; 
     overflow-x: hidden;
@@ -256,13 +257,13 @@
   }
   
   #bonusPicksGrid { 
-    flex: 1; 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); 
+    grid-template-columns: repeat(3, 1fr); 
     gap: 1rem; 
     align-content: center; 
     justify-items: center; 
-    max-width: 400px; 
+    width: 100%;
+    max-width: 600px; 
     margin: 0 auto; 
   }
   
@@ -270,9 +271,8 @@
     position: relative; 
     width: 100%; 
     aspect-ratio: 1; 
-    max-width: 140px; 
     cursor: pointer; 
-    border-radius: 12px; 
+    border-radius: 8px; 
     overflow: hidden; 
     box-shadow: 0 4px 12px rgba(0,0,0,.55), inset 0 0 12px rgba(255,255,255,.08); 
     backdrop-filter: blur(1px); 
