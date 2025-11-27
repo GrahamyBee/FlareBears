@@ -117,19 +117,9 @@
       text-align: center;
     }
     
-    /* ===== BONUS ROUND - PORTRAIT SPECIFIC ===== */
-    #bonusRoundOverlay {
-      background-size: cover;
-      background-position: center center;
-    }
-    
+    /* Bonus round optimized for portrait */
     #bonusRoundInner {
-      padding: 3vh 5vw;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      padding: 2rem 1rem;
     }
     
     #bonusHeader {
@@ -139,27 +129,18 @@
     
     #bonusSub {
       font-size: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     
     #bonusPicksGrid {
-      grid-template-columns: repeat(2, 1fr); /* 2 columns */
-      grid-template-rows: repeat(3, 1fr); /* 3 rows */
-      gap: 4vw;
-      width: 80vw;
-      max-width: 500px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 100%;
+      padding: 0 1rem;
     }
     
-    #bonusRoundOverlay .pickCell {
-      width: 100%;
-      aspect-ratio: 1;
+    .pickCell {
       max-width: none;
-    }
-    
-    #bonusControls {
-      margin-top: 2rem;
-      width: 100%;
-      max-width: 500px;
     }
   }
   
@@ -191,49 +172,40 @@
       font-size: 0.75rem; 
     }
     
-    /* ===== BONUS ROUND - LANDSCAPE SPECIFIC ===== */
-    #bonusRoundOverlay {
-      background-size: cover;
-      background-position: center center;
-    }
-    
+    /* Bonus round optimized for landscape */
     #bonusRoundInner {
-      padding: 3vh 5vw;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      padding: 1rem 2rem;
       justify-content: center;
       align-items: center;
     }
     
     #bonusHeader {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       margin-bottom: 0.5rem;
     }
     
     #bonusSub {
-      font-size: 1rem;
+      font-size: 0.9rem;
       margin-bottom: 1.5rem;
     }
     
     #bonusPicksGrid {
-      grid-template-columns: repeat(3, 1fr); /* 3 columns */
-      grid-template-rows: repeat(2, 1fr); /* 2 rows */
-      gap: 3vw;
-      width: 85vw;
-      max-width: 800px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+      max-width: 95vw;
+      width: 100%;
     }
     
-    #bonusRoundOverlay .pickCell {
+    .pickCell {
+      max-width: 140px;
       width: 100%;
-      aspect-ratio: 1;
-      max-width: none;
     }
     
     #bonusControls {
-      margin-top: 2rem;
-      width: 100%;
-      max-width: 600px;
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
     }
   }
   
