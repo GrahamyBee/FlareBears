@@ -825,8 +825,10 @@ function ensureCells(){
       const cell=document.createElement('div');
       cell.className='cell';
       cell.dataset.pos=`${c}-${r}`;
-      cell.style.left=(c*(100+6))+"px";
-  cell.style.top=(r*100)+"px"; // removed vertical gap
+      // Use percentage positioning to match responsive cell sizing
+      // Each cell is 18.87% wide, with 1.13% gap (6px/530px)
+      cell.style.left=(c*20)+'%'; // 18.87% + 1.13% ≈ 20%
+      cell.style.top=(r*18.87)+'%'; // cells are square (aspect-ratio: 1), so height = width
       slot.appendChild(cell);
     }
   }
