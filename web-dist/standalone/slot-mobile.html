@@ -826,9 +826,11 @@ function ensureCells(){
       cell.className='cell';
       cell.dataset.pos=`${c}-${r}`;
       // Use percentage positioning to match responsive cell sizing
-      // Each cell is 18.87% wide, with 1.13% gap (6px/530px)
+      // Slot is 530x300, cells are 100x100 with 6px horizontal gaps, 0px vertical gaps
+      // Horizontal: 100/530 = 18.87%, gap = 6/530 = 1.13%, total per reel = 20%
       cell.style.left=(c*20)+'%'; // 18.87% + 1.13% ≈ 20%
-      cell.style.top=(r*18.87)+'%'; // cells are square (aspect-ratio: 1), so height = width
+      // Vertical: 100/300 = 33.333%, no vertical gaps
+      cell.style.top=(r*33.333)+'%'; // Each row is exactly 1/3 of slot height
       slot.appendChild(cell);
     }
   }
