@@ -62,10 +62,9 @@
     align-items: center; 
     justify-content: center; 
     position: absolute; 
-    top: 0; 
-    left: 0; 
     pointer-events: none; 
     z-index: 5; 
+    /* top and left are set dynamically via JavaScript */
   }
   
   .symbol-img { 
@@ -174,38 +173,32 @@
     
     /* Bonus round optimized for landscape */
     #bonusRoundInner {
-      padding: 1rem 2rem;
+      padding: 1rem;
       justify-content: center;
-      align-items: center;
     }
     
     #bonusHeader {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       margin-bottom: 0.5rem;
     }
     
     #bonusSub {
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
     }
     
     #bonusPicksGrid {
-      grid-template-columns: repeat(6, 1fr);
-      gap: 1rem;
-      max-width: 95vw;
-      width: 100%;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      max-width: 90vw;
     }
     
     .pickCell {
-      max-width: 140px;
-      width: 100%;
+      max-width: 120px;
     }
     
     #bonusControls {
-      margin-top: 1.5rem;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
+      margin-top: 1rem;
     }
   }
   
@@ -213,14 +206,13 @@
   #bonusRoundOverlay { 
     position: fixed; 
     inset: 0; 
-    width: 100vw; 
-    height: 100vh; 
+    width: 100%; 
+    height: 100%; 
     display: none; 
-    z-index: 9999; 
+    z-index: 900; 
     background: url('/FlareBears/symbols/bonus background image.jpg') center/cover no-repeat; 
     box-shadow: 0 0 40px rgba(0,0,0,.6) inset; 
     overflow-y: auto; 
-    overflow-x: hidden;
   }
   
   #bonusRoundOverlay.fadeOut { 
@@ -230,12 +222,10 @@
   #bonusRoundInner { 
     position: relative; 
     width: 100%; 
-    min-height: 100vh; 
+    min-height: 100%; 
     display: flex; 
     flex-direction: column; 
-    justify-content: center;
-    align-items: center;
-    padding: 1.5rem 1rem; 
+    padding: 1.5rem 1rem 1rem; 
     box-sizing: border-box; 
   }
   
