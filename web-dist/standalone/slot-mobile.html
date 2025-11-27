@@ -87,35 +87,6 @@
     z-index: 20; 
   }
   
-  /* Glow overlay for anticipation effects */
-  #glowOverlay {
-    position: absolute;
-    top: 28%;
-    left: 20.5%;
-    width: 58%;
-    height: auto;
-    aspect-ratio: 530/300;
-    pointer-events: none;
-    z-index: 15;
-  }
-  
-  .cell-glow {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(2px);
-  }
-  
-  .cell-glow.fs {
-    box-shadow: 0 0 24px 10px rgba(0,255,140,0.8), 0 0 48px 22px rgba(0,255,160,0.55), inset 0 0 16px rgba(0,255,150,0.7);
-    animation: neonPulse 1.3s ease-in-out infinite;
-  }
-  
-  .cell-glow.bonus {
-    box-shadow: 0 0 24px 10px rgba(255,150,40,0.85), 0 0 48px 22px rgba(255,130,20,0.55), inset 0 0 16px rgba(255,170,60,0.75);
-    animation: neonPulse 1.3s ease-in-out infinite;
-  }
-  
   /* ===== PORTRAIT MODE (MOBILE) ===== */
   @media (orientation: portrait) {
     body {
@@ -458,7 +429,7 @@
     animation: none; 
   }
   
-  /* Cell pulse animation for anticipation (glow is now in overlay) */
+  /* Cell pulse animation for anticipation (glow is dynamically created inside cell) */
   .cell.anticipate.pulse,
   .cell.anticipate-fs.pulse,
   .cell.anticipate-bonus.pulse { 
@@ -939,8 +910,7 @@ function beginReelCycle(reelIndex, startIndex){
         const elapsed=now-startTime;
         const progress=Math.min(elapsed/duration,1);
         const eased = easeOutCubic(progress);
-        // Interpolate towards target with a subtle leading overshoot (apply only near end)
-        // Smooth interpolation (removed upward overshoot for clearer stop before bounce)
+        // Smooth interpolation to target position
         pos = startPos*(1-eased) + targetPos*eased;
         // Dynamic blur reduction based on progress when in deceleration phase
         if(track.classList.contains('blurFast')){
@@ -967,9 +937,7 @@ function beginReelCycle(reelIndex, startIndex){
               cell.dataset.sym = actualSym;
             }
           }
-          // Softer JS bounce (reduced amplitude & duration) – subtle tactile feedback without harsh drop.
-          // Removed bounce/scale pulse entirely to eliminate any perceived vertical offset.
-          // Alignment diagnostic log (can be removed after validation)
+          // Alignment diagnostic log
           try {
             const visA = strip[landingIndex];
             const visB = strip[(landingIndex+1)%strip.length];
@@ -1184,8 +1152,7 @@ function closeBonusPanel(){
 document.getElementById('bonusWinCloseBtn')?.addEventListener('click', ()=>closeBonusPanel());
 // Legacy buttons retained (modal no longer used) – safely guard
 document.getElementById('pickCloseBtn')?.addEventListener('click',()=>{ const m=document.getElementById('pickModal'); if(m) m.style.display='none'; activePickGame=null; });
-document.getElementById('pickRevealRestBtn')?.addEventListener('click',()=>{ /* deprecated */ });
-// New bonus overlay controls
+// Bonus overlay controls
 document.getElementById('bonusRevealBtn').addEventListener('click',()=>{
   if (!activePickGame) return;
   if (activePickGame.complete) return; // already revealed all via finalize
@@ -1298,11 +1265,8 @@ async function spin(forceBonus=false){
   } else if (pendingFreeSpins===0 || bonusCount>0) {
     document.getElementById('fsState').classList.remove('active');
   }
-  // (Moved anticipation highlight to post-deceleration so glow isn't cleared by reel landing)
-  // Wait until all reels fully stopped before highlighting win lines
+  // Wait until all reels fully stopped before final glow refresh
   await Promise.all(decelPromises);
-  // Reel-wide glow removed; no track-level classes to clear
-  // Post-decel two-or-more scatter glow refresh
   // Final consolidation: ensure all FS/Bonus symbols glow & pulse if 2+ present
   const fsTotal = result.scatterCount;
   const bonusTotal = result.scatter2Count;
@@ -1338,8 +1302,7 @@ initGrid(); updateStats();
 log('Fixed Stake Active: £1 total (25 lines @ £0.04 per line)');
 // Display initial window - cells stay empty, symbols only shown in reel tracks
 function log(msg){ const el=document.getElementById('log'); const line=document.createElement('div'); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; el.prepend(line); }
-// Removed: Don't add static images to cells - symbols are only in reel tracks
-// The cells are just overlay containers for effects and glow animations
+// Cells are overlay containers for effects and glow animations
 // Create reel tracks on page load so symbols are visible immediately
 ensureReelTracks();
 // Log initial reel window (top 3) referencing underlying strip index 0 start
