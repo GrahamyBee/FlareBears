@@ -26,7 +26,8 @@
   /* ===== GAME BOARD & SLOT LAYOUT ===== */
   #gameBoard { 
     position: relative; 
-    width: 100vw; 
+    width: 100%; 
+    max-width: 100vw;
     aspect-ratio: 3/2; 
     background: url('/FlareBears/symbols/background.jpg') center/contain no-repeat; 
     margin: 0 auto; 
@@ -99,9 +100,10 @@
       margin-top: 0; /* Start at top of page */
       margin-bottom: 5vh; /* Space between game and controls */
       /* Clear conflicting properties from base styles */
-      position: static;
-      margin-left: 0;
-      margin-right: 0;
+      position: relative;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
     }
     
     #controls { 
